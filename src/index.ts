@@ -10,15 +10,6 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set.");
 }
 
-const pool = mysql.createPool({
-  uri: process.env.DATABASE_URL,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
-
-const db = drizzle(pool);
-
 // Test DB connection
 (async () => {
   try {
@@ -35,6 +26,7 @@ app.use(express.json());
 
 // User routes (to be implemented in controllers/routes)
 import userRouter from "./routes/user.route";
+import { pool } from "./db/connection";
 app.use("/api/users", userRouter);
 
 const PORT = process.env.PORT || 3000;

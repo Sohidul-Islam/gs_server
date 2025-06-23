@@ -1,7 +1,8 @@
-import { users } from "../db/schema";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
+import { users } from "../db/schema/users";
+import bcrypt from "bcryptjs";
 
 const pool = mysql.createPool({
   uri: process.env.DATABASE_URL,
@@ -15,15 +16,30 @@ export const getUsers = async () => {
   return db.select().from(users);
 };
 
-export const insertUser = async ({
-  name,
-  email,
-}: {
-  name: string;
+export const findUserByUsernameOrEmail = async (usernameOrEmail: string) => {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(
+      or(eq(users.username, usernameOrEmail), eq(users.email, usernameOrEmail))
+    );
+  return user;
+};
+
+export const createUser = async (data: {
+  username: string;
+  fullname: string;
+  phone: string;
   email: string;
+  password: string;
+  currency_id: number;
+  refer_code?: string;
+  isAgreeWithTerms: boolean;
 }) => {
-  const result = await db.insert(users).values({ name, email });
-  // Fetch the inserted user (assuming auto-increment id)
-  const [user] = await db.select().from(users).where(eq(users.email, email));
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+  const [user] = await db.insert(users).values({
+    ...data,
+    password: hashedPassword,
+  });
   return user;
 };

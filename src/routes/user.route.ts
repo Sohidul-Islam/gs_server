@@ -7,8 +7,16 @@ import {
 
 const router = Router();
 
-router.get("/", getAllUsers);
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.get("/", (req, res, next) => {
+  getAllUsers(req, res).catch(next);
+});
+
+router.post("/register", (req, res, next) => {
+  registerUser(req, res).catch(next);
+});
+
+router.post("/login", (req, res, next) => {
+  loginUser(req, res).catch(next);
+});
 
 export default router;

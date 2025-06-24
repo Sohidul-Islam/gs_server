@@ -3,6 +3,7 @@ import mysql from "mysql2/promise";
 import { eq, or } from "drizzle-orm";
 import { users } from "../db/schema/users";
 import bcrypt from "bcryptjs";
+import { currency } from "../db/schema";
 
 const pool = mysql.createPool({
   uri: process.env.DATABASE_URL,
@@ -20,8 +21,13 @@ export const findUserByUsernameOrEmail = async (usernameOrEmail: string) => {
   const [user] = await db
     .select()
     .from(users)
+    // .leftJoin(currency, eq(currency.id, users.currency_id))
     .where(
-      or(eq(users.username, usernameOrEmail), eq(users.email, usernameOrEmail))
+      or(
+        eq(users.username, usernameOrEmail),
+        eq(users.email, usernameOrEmail),
+        eq(users.phone, usernameOrEmail)
+      )
     );
   return user;
 };
@@ -36,10 +42,11 @@ export const createUser = async (data: {
   refer_code?: string;
   isAgreeWithTerms: boolean;
 }) => {
-  const hashedPassword = await bcrypt.hash(data.password, 10);
+  // const hashedPassword = await bcrypt.hash(data.password, 10);
   const [user] = await db.insert(users).values({
     ...data,
-    password: hashedPassword,
+    // password: hashedPassword,
   });
+
   return user;
 };

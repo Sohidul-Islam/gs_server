@@ -30,12 +30,13 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? ["https://yourdomain.com"] // Replace with your actual domain
+        ? ["https://fashionglory-gaming.vercel.app"] // Replace with your actual domain
         : [
             "http://localhost:3000",
             "http://localhost:3001",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
+            "https://fashionglory-gaming.vercel.app/",
           ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -48,6 +49,10 @@ app.use(express.json());
 // User routes (to be implemented in controllers/routes)
 import userRouter from "./routes/user.route";
 app.use("/api/users", userRouter);
+
+app.get("/", (req, res) => {
+  res.send("Welcome to the Fashion Glory API!");
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

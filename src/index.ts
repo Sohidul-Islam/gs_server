@@ -4,6 +4,7 @@ import type { ConnectionOptions } from "mysql2";
 import process from "process";
 import express from "express";
 import mysql from "mysql2/promise";
+import cors from "cors";
 import { pool } from "./db/connection";
 
 // Ensure process.env.DATABASE_URL is defined and of correct type
@@ -23,6 +24,25 @@ if (!process.env.DATABASE_URL) {
 })();
 
 const app = express();
+
+// CORS configuration
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? ["https://yourdomain.com"] // Replace with your actual domain
+        : [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+          ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
+
 app.use(express.json());
 
 // User routes (to be implemented in controllers/routes)

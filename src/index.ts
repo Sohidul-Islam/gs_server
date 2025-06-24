@@ -4,6 +4,7 @@ import type { ConnectionOptions } from "mysql2";
 import process from "process";
 import express from "express";
 import mysql from "mysql2/promise";
+import { pool } from "./db/connection";
 
 // Ensure process.env.DATABASE_URL is defined and of correct type
 if (!process.env.DATABASE_URL) {
@@ -26,7 +27,6 @@ app.use(express.json());
 
 // User routes (to be implemented in controllers/routes)
 import userRouter from "./routes/user.route";
-import { pool } from "./db/connection";
 app.use("/api/users", userRouter);
 
 const PORT = process.env.PORT || 3000;

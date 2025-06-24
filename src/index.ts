@@ -30,12 +30,16 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? ["https://fashionglory-gaming.vercel.app"] // Replace with your actual domain
+        ? [
+            "https://fashionglory-gaming.vercel.app",
+            "https://fashionglory-gaming.vercel.app/",
+          ] // Replace with your actual domain
         : [
             "http://localhost:3000",
             "http://localhost:3001",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
+            "https://fashionglory-gaming.vercel.app",
             "https://fashionglory-gaming.vercel.app/",
           ],
     credentials: true,

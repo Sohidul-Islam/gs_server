@@ -55,6 +55,10 @@ app.use(express.json());
 import userRouter from "./routes/user.route";
 app.use("/api/users", userRouter);
 
+// Admin routes (to be implemented in controllers/routes)
+import adminRouter from "./routes/admin.route";
+app.use("/api/admin", adminRouter);
+
 app.get("/", (req, res) => {
   res.send("Welcome to the Fashion Glory API!");
 });

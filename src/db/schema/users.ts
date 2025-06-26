@@ -8,6 +8,7 @@ import {
 } from "drizzle-orm/mysql-core";
 import { relations, sql } from "drizzle-orm";
 import { currency } from "./currency";
+import { adminUsers } from "./AdminUsers";
 
 export const users = mysqlTable("users", {
   id: serial("id").primaryKey().autoincrement(),
@@ -18,6 +19,7 @@ export const users = mysqlTable("users", {
   password: varchar("password", { length: 255 }),
   currency_id: int("currency_id"),
   refer_code: varchar("refer_code", { length: 50 }),
+  created_by: int("created_by"),
   isAgreeWithTerms: boolean("isAgreeWithTerms"),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
@@ -26,5 +28,9 @@ export const usersRelations = relations(users, ({ one }) => ({
   currency: one(currency, {
     fields: [users.currency_id],
     references: [currency.id],
+  }),
+  created_by: one(adminUsers, {
+    fields: [users.created_by],
+    references: [adminUsers.id],
   }),
 }));

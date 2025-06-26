@@ -11,21 +11,26 @@ import { adminUsers } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 
-export const adminRegistration = async (req: Request, res: Response) => {
+export const adminRegistration = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { username, fullname, phone, email, password, role } = req.body;
     if (!username || !fullname || !phone || !email || !password || !role) {
-      return res
+      res
         .status(400)
         .json({ status: false, message: "Missing required fields" });
+      return;
     }
     const existing =
       (await findAdminByUsernameOrEmail(username)) ||
       (await findAdminByUsernameOrEmail(email));
     if (existing) {
-      return res
+      res
         .status(409)
         .json({ status: false, message: "Admin user already exists" });
+      return;
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const admin = await createAdmin({
@@ -36,38 +41,40 @@ export const adminRegistration = async (req: Request, res: Response) => {
       password: hashedPassword,
       role,
     });
-    return res.status(201).json({
+    res.status(201).json({
       status: true,
       message: "Admin registered successfully",
       data: admin,
     });
   } catch (error) {
-    return res
+    res
       .status(500)
       .json({ status: false, message: "Failed to register admin" });
   }
 };
 
-export const adminLogin = async (req: Request, res: Response) => {
+export const adminLogin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { userNameOrEmailorPhone, password } = req.body;
     if (!userNameOrEmailorPhone || !password) {
-      return res.status(400).json({
+      res.status(400).json({
         status: false,
         message: "Missing username/email/phone or password",
       });
+      return;
     }
     const admin = await findAdminByUsernameOrEmail(userNameOrEmailorPhone);
     if (!admin || typeof admin.password !== "string") {
-      return res
-        .status(401)
-        .json({ status: false, message: "Invalid credentials" });
+      res.status(401).json({ status: false, message: "Invalid credentials" });
+      return;
     }
     const isMatch = password === admin.password;
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ status: false, message: "Invalid credentials" });
+      res.status(401).json({ status: false, message: "Invalid credentials" });
+      return;
     }
 
     if (admin.id)
@@ -86,14 +93,14 @@ export const adminLogin = async (req: Request, res: Response) => {
       process.env.JWT_SECRET || "your_jwt_secret",
       { expiresIn: "1h" }
     );
-    return res.json({
+    res.json({
       status: true,
       message: "Login successful",
       data: admin,
       accessToken: token,
     });
   } catch (error) {
-    return res.status(500).json({ status: false, message: "Failed to login" });
+    res.status(500).json({ status: false, message: "Failed to login" });
   }
 };
 
@@ -112,22 +119,31 @@ const getAdminFromToken = async (req: Request) => {
   }
 };
 
-export const adminLogout = async (req: Request, res: Response) => {
-  const admin = await getAdminFromToken(req);
-  if (!admin) {
-    return res.status(401).json({ status: false, message: "Unauthorized" });
+export const adminLogout = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const user = (req as any).user;
+  if (!user || !user.id) {
+    res.status(401).json({ status: false, message: "Unauthorized" });
+    return;
   }
   await db
     .update(adminUsers)
     .set({ isLoggedIn: false })
-    .where(eq(adminUsers.id, admin.id));
-  return res.json({ status: true, message: "Logout successful" });
+    .where(eq(adminUsers.id, user.id));
+  res.json({ status: true, message: "Logout successful" });
 };
 
-export const adminProfile = async (req: Request, res: Response) => {
-  const admin = await getAdminFromToken(req);
-  if (!admin) {
-    return res.status(401).json({ status: false, message: "Unauthorized" });
+export const adminProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const user = (req as any).user;
+  if (!user || !user.id) {
+    res.status(401).json({ status: false, message: "Unauthorized" });
+    return;
   }
-  return res.json({ status: true, data: admin });
+  const admin = await getAdminById(user.id);
+  res.json({ status: true, data: admin });
 };

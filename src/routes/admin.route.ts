@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { verifyToken } from "../middlewares/verifyToken";
+import { asyncHandler } from "../utils/asyncHandler";
 
 import {
   adminLogin,
@@ -9,19 +11,9 @@ import {
 
 const router = Router();
 
-router.post("/login", (req, res, next) => {
-  adminLogin(req, res).catch(next);
-});
-
-router.post("/registration", (req, res, next) => {
-  adminRegistration(req, res).catch(next);
-});
-router.get("/profile", (req, res, next) => {
-  adminProfile(req, res).catch(next);
-});
-
-router.post("/logout", (req, res, next) => {
-  adminLogout(req, res).catch(next);
-});
+router.post("/login", asyncHandler(adminLogin));
+router.post("/registration", asyncHandler(adminRegistration));
+router.post("/logout", asyncHandler(verifyToken, adminLogout));
+router.get("/profile", asyncHandler(adminProfile));
 
 export default router;

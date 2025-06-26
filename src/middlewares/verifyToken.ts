@@ -12,7 +12,7 @@ export function verifyToken(req: Request, res: Response, next: NextFunction) {
   try {
     const decoded = verifyJwt(token);
     (req as any).user = decoded;
-    next();
+    return next();
   } catch {
     return res
       .status(401)

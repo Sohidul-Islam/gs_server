@@ -18,6 +18,7 @@ export const adminUsers = mysqlTable("admin_users", {
   role: varchar("role", { length: 50 }).$type<
     "admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate"
   >(),
+  isLoggedIn: boolean("is_logged_in").default(false),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

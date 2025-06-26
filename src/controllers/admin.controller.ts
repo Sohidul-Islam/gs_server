@@ -6,6 +6,9 @@ import {
   createAdmin,
   getAdminById,
 } from "../models/admin.model";
+import { db } from "../db/connection";
+import { adminUsers } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export const adminRegistration = async (req: Request, res: Response) => {
   try {
@@ -59,12 +62,19 @@ export const adminLogin = async (req: Request, res: Response) => {
         .status(401)
         .json({ status: false, message: "Invalid credentials" });
     }
-    const isMatch = await bcrypt.compare(password, admin.password);
+    const isMatch = password === admin.password;
     if (!isMatch) {
       return res
         .status(401)
         .json({ status: false, message: "Invalid credentials" });
     }
+
+    if (admin.id)
+      await db
+        .update(adminUsers)
+        .set({ isLoggedIn: true })
+        .where(eq(adminUsers.id, admin.id));
+
     const token = jwt.sign(
       {
         id: admin.id,
@@ -102,6 +112,18 @@ const getAdminFromToken = async (req: Request) => {
   } catch {
     return null;
   }
+};
+
+export const adminLogout = async (req: Request, res: Response) => {
+  const admin = await getAdminFromToken(req);
+  if (!admin) {
+    return res.status(401).json({ status: false, message: "Unauthorized" });
+  }
+  await db
+    .update(adminUsers)
+    .set({ isLoggedIn: false })
+    .where(eq(adminUsers.id, admin.id));
+  return res.json({ status: true, message: "Logout successful" });
 };
 
 export const adminProfile = async (req: Request, res: Response) => {

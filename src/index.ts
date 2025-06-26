@@ -7,6 +7,9 @@ import mysql from "mysql2/promise";
 import cors from "cors";
 import { pool } from "./db/connection";
 
+// Routes import
+import userRouter from "./routes/user.route";
+import adminRouter from "./routes/admin.route";
 // Ensure process.env.DATABASE_URL is defined and of correct type
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set.");
@@ -52,11 +55,11 @@ app.use(cors());
 app.use(express.json());
 
 // User routes (to be implemented in controllers/routes)
-import userRouter from "./routes/user.route";
+
 app.use("/api/users", userRouter);
 
 // Admin routes (to be implemented in controllers/routes)
-import adminRouter from "./routes/admin.route";
+
 app.use("/api/admin", adminRouter);
 
 app.get("/", (req, res) => {

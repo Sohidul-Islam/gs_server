@@ -21,6 +21,7 @@ export const users = mysqlTable("users", {
   refer_code: varchar("refer_code", { length: 50 }),
   created_by: int("created_by"),
   isAgreeWithTerms: boolean("isAgreeWithTerms"),
+  isLoggedIn: boolean("is_logged_in").default(false),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

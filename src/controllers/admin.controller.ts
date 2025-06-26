@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
@@ -140,10 +140,31 @@ export const adminProfile = async (
   res: Response
 ): Promise<void> => {
   const user = (req as any).user;
+
   if (!user || !user.id) {
     res.status(401).json({ status: false, message: "Unauthorized" });
     return;
   }
-  const admin = await getAdminById(user.id);
-  res.json({ status: true, data: admin });
+  try {
+    const admin = await getAdminById(user.id);
+    // console.log({ admin });
+
+    if (admin?.id)
+      res.status(200).json({
+        status: true,
+        message: "Profile fetched successfully",
+        data: admin,
+      });
+    else {
+      res.status(200).json({
+        status: false,
+        message: "Profile not found",
+        data: admin,
+      });
+    }
+  } catch (error) {
+    res
+      .status(200)
+      .json({ message: "Something went wrong", status: false, error });
+  }
 };

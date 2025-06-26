@@ -14,6 +14,6 @@ const router = Router();
 router.post("/login", asyncHandler(adminLogin));
 router.post("/registration", asyncHandler(adminRegistration));
 router.post("/logout", asyncHandler(verifyToken, adminLogout));
-router.get("/profile", asyncHandler(adminProfile));
+router.get("/profile", asyncHandler(verifyToken, adminProfile));
 
 export default router;

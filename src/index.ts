@@ -6,6 +6,8 @@ import express from "express";
 import mysql from "mysql2/promise";
 import cors from "cors";
 import { pool } from "./db/connection";
+import { Request, Response, NextFunction } from "express";
+import { errorHandler } from "./middlewares/errorHandler";
 
 // Routes import
 import userRouter from "./routes/user.route";
@@ -65,6 +67,9 @@ app.use("/api/admin", adminRouter);
 app.get("/", (req, res) => {
   res.send("Welcome to the Fashion Glory API!");
 });
+
+// Global error handler
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

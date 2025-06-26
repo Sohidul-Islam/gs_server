@@ -70,7 +70,12 @@ export const getUsersWithFilters = async (filters: UserFilters) => {
   if (keyword) {
     const kw = `%${keyword}%`;
     whereClauses.push(
-      or(like(users.username, kw), like(users.email, kw), like(users.phone, kw))
+      or(
+        like(users.username, `%${kw}%`),
+        like(users.fullname, `%${kw}%`),
+        like(users.email, `%${kw}%`),
+        like(users.phone, `%${kw}%`)
+      )
     );
   }
   const where = whereClauses.length ? and(...whereClauses) : undefined;

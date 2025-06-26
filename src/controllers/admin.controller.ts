@@ -124,7 +124,18 @@ export const adminLogout = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const user = (req as any).user;
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const err = new Error("No token provided");
+    (err as any).status = 401;
+    throw err;
+  }
+  const token = authHeader.split(" ")[1];
+
+  const decoded = verifyJwt(token);
+
+  const user = decoded;
+
   if (!user || !user.id) {
     res.status(401).json({ status: false, message: "Unauthorized" });
     return;
@@ -140,7 +151,17 @@ export const adminProfile = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const user = (req as any).user;
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const err = new Error("No token provided");
+    (err as any).status = 401;
+    throw err;
+  }
+  const token = authHeader.split(" ")[1];
+
+  const decoded = verifyJwt(token);
+
+  const user = decoded;
 
   if (!user || !user.id) {
     res.status(401).json({ status: false, message: "Unauthorized" });
@@ -162,11 +183,14 @@ export const adminProfile = async (
         message: "Profile not found",
         data: admin,
       });
+      return;
     }
   } catch (error) {
-    res
-      .status(200)
-      .json({ message: "Something went wrong", status: false, error });
+    if (!res.headersSent) {
+      res
+        .status(200)
+        .json({ message: "Something went wrong", status: false, error });
+    }
   }
 };
 

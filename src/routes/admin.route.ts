@@ -14,8 +14,8 @@ const router = Router();
 
 router.post("/login", asyncHandler(adminLogin));
 router.post("/registration", asyncHandler(adminRegistration));
-router.post("/logout", asyncHandler(verifyToken, adminLogout));
-router.get("/profile", asyncHandler(verifyToken, adminProfile));
-router.get("/players", asyncHandler(verifyToken, getPlayers));
+router.post("/logout", asyncHandler(adminLogout));
+router.get("/profile", asyncHandler(adminProfile));
+router.get("/players", asyncHandler(getPlayers));
 
 export default router;

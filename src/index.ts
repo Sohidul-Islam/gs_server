@@ -7,11 +7,11 @@ import mysql from "mysql2/promise";
 import cors from "cors";
 import { pool } from "./db/connection";
 import { Request, Response, NextFunction } from "express";
-import { errorHandler } from "./middlewares/errorHandler";
 
 // Routes import
 import userRouter from "./routes/user.route";
 import adminRouter from "./routes/admin.route";
+import { errorHandler } from "./middlewares/errorHandler";
 // Ensure process.env.DATABASE_URL is defined and of correct type
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set.");

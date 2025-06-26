@@ -1,9 +1,10 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, or } from "drizzle-orm";
+import { eq, or, and, like } from "drizzle-orm";
 import { users } from "../db/schema/users";
 import bcrypt from "bcryptjs";
 import { currency } from "../db/schema";
+import { sql } from "drizzle-orm";
 
 const pool = mysql.createPool({
   uri: process.env.DATABASE_URL,
@@ -49,4 +50,52 @@ export const createUser = async (data: {
   });
 
   return user;
+};
+
+export interface UserFilters {
+  playerId?: number;
+  phone?: string;
+  status?: string;
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export const getUsersWithFilters = async (filters: UserFilters) => {
+  const { playerId, phone, status, keyword, page = 1, pageSize = 10 } = filters;
+  const whereClauses = [];
+  if (playerId) whereClauses.push(eq(users.id, playerId));
+  if (phone) whereClauses.push(eq(users.phone, phone));
+  if (status) whereClauses.push(eq(users.status as any, status));
+  if (keyword) {
+    const kw = `%${keyword}%`;
+    whereClauses.push(
+      or(like(users.username, kw), like(users.email, kw), like(users.phone, kw))
+    );
+  }
+  const where = whereClauses.length ? and(...whereClauses) : undefined;
+  // Get total count
+  const total = await db
+    .select({ count: sql`COUNT(*)` })
+    .from(users)
+    .where(where)
+    .then((rows) => Number(rows[0]?.count || 0));
+  // Get paginated data
+  const data = await db
+    .select()
+    .from(users)
+    .where(where)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+  const totalPages = Math.ceil(total / pageSize);
+  return {
+    total,
+    data,
+    pagination: {
+      page,
+      pageSize,
+      totalPages,
+      total,
+    },
+  };
 };

@@ -10,6 +10,7 @@ import { db } from "../db/connection";
 import { adminUsers } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
+import { getUsersWithFilters } from "../models/user.model";
 
 export const adminRegistration = async (
   req: Request,
@@ -167,4 +168,28 @@ export const adminProfile = async (
       .status(200)
       .json({ message: "Something went wrong", status: false, error });
   }
+};
+
+export const getPlayers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const {
+    playerId,
+    phone,
+    status,
+    keyword,
+    page = 1,
+    pageSize = 10,
+  } = req.query;
+  const filters = {
+    playerId: playerId ? Number(playerId) : undefined,
+    phone: phone as string | undefined,
+    status: status as string | undefined,
+    keyword: keyword as string | undefined,
+    page: page ? Number(page) : 1,
+    pageSize: pageSize ? Number(pageSize) : 10,
+  };
+  const result = await getUsersWithFilters(filters);
+  res.json({ status: true, data: result });
 };

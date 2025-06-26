@@ -9,6 +9,7 @@ import {
 import { db } from "../db/connection";
 import { adminUsers } from "../db/schema";
 import { eq } from "drizzle-orm";
+import { verifyJwt } from "../utils/jwt";
 
 export const adminRegistration = async (req: Request, res: Response) => {
   try {
@@ -102,10 +103,7 @@ const getAdminFromToken = async (req: Request) => {
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
   const token = authHeader.split(" ")[1];
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your_jwt_secret"
-    ) as any;
+    const decoded = verifyJwt(token);
     if (!decoded?.id) return null;
     const admin = await getAdminById(decoded.id);
     return admin;

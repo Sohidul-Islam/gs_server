@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, or } from "drizzle-orm";
+import { eq, or, and, like } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { adminUsers } from "../db/schema";
 import { db } from "../db/connection";
 
@@ -44,4 +45,53 @@ export const getAdminById = async (id: number) => {
     .from(adminUsers)
     .where(eq(adminUsers.id, id));
   return admin;
+};
+
+export interface AdminFilters {
+  role?: "admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate";
+  page?: number;
+  pageSize?: number;
+  searchKeyword?: string;
+}
+
+export const getAdminsWithFilters = async (filters: AdminFilters) => {
+  const { role, page = 1, pageSize = 10, searchKeyword } = filters;
+  const whereClauses = [];
+  if (role) whereClauses.push(eq(adminUsers.role, role));
+  if (searchKeyword) {
+    const kw = `%${searchKeyword}%`;
+    whereClauses.push(
+      or(
+        like(adminUsers.username, kw),
+        like(adminUsers.fullname, kw),
+        like(adminUsers.email, kw),
+        like(adminUsers.phone, kw)
+      )
+    );
+  }
+  const where = whereClauses.length ? and(...whereClauses) : undefined;
+  // Get total count
+  const total = await db
+    .select({ count: sql`COUNT(*)` })
+    .from(adminUsers)
+    .where(where)
+    .then((rows) => Number(rows[0]?.count || 0));
+  // Get paginated data
+  const data = await db
+    .select()
+    .from(adminUsers)
+    .where(where)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+  const totalPages = Math.ceil(total / pageSize);
+  return {
+    total,
+    data,
+    pagination: {
+      page,
+      pageSize,
+      totalPages,
+      total,
+    },
+  };
 };

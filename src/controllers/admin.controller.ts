@@ -5,6 +5,7 @@ import {
   findAdminByUsernameOrEmail,
   createAdmin,
   getAdminById,
+  getAdminsWithFilters,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers } from "../db/schema";
@@ -235,4 +236,24 @@ export const getPlayers = async (
   };
   const result = await getUsersWithFilters(filters);
   res.json({ status: true, data: result });
+};
+
+export const getAdmins = async (req: Request, res: Response) => {
+  try {
+    const { role, page = 1, pageSize = 10, keyword } = req.query;
+    const filters = {
+      role: role as
+        | ("admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate")
+        | undefined,
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 10,
+      searchKeyword: keyword as string | undefined,
+    };
+    const result = await getAdminsWithFilters(filters);
+    res.json({ status: true, ...result });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to fetch admins", error });
+  }
 };

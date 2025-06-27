@@ -25,6 +25,12 @@ export const createAdmin = async (data: {
   email: string;
   password: string;
   role: "admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate";
+  country?: string;
+  city?: string;
+  street?: string;
+  minTrx?: string;
+  maxTrx?: string;
+  currency?: number;
 }) => {
   const [admin] = await db.insert(adminUsers).values({
     ...data,

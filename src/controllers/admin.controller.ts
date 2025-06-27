@@ -17,7 +17,20 @@ export const adminRegistration = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { username, fullname, phone, email, password, role } = req.body;
+    const {
+      username,
+      fullname,
+      phone,
+      email,
+      password,
+      role,
+      country,
+      city,
+      street,
+      minTrx,
+      maxTrx,
+      currency,
+    } = req.body;
     if (!username || !fullname || !phone || !email || !password || !role) {
       res
         .status(400)
@@ -41,6 +54,12 @@ export const adminRegistration = async (
       email,
       password: hashedPassword,
       role,
+      country,
+      city,
+      street,
+      minTrx: minTrx !== undefined ? String(minTrx) : undefined,
+      maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
+      currency,
     });
     res.status(201).json({
       status: true,
@@ -101,7 +120,7 @@ export const adminLogin = async (
       accessToken: token,
     });
   } catch (error) {
-    res.status(500).json({ status: false, message: "Failed to login" });
+    res.status(500).json({ status: false, message: "Failed to login", error });
   }
 };
 

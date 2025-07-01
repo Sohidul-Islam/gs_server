@@ -41,7 +41,10 @@ export const adminUsers = mysqlTable("admin_users", {
   ]),
   status: varchar("status", { length: 50 }).$type<"active" | "inactive">(),
   createdBy: int("created_by"),
+  lastIp: varchar("last_ip", { length: 255 }),
+  lastLogin: datetime("last_login"),
   isLoggedIn: boolean("is_logged_in").default(false),
+  isVerified: boolean("is_verified").default(false),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

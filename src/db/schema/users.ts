@@ -26,6 +26,8 @@ export const users = mysqlTable("users", {
   isAgreeWithTerms: boolean("isAgreeWithTerms"),
   isLoggedIn: boolean("is_logged_in").default(false),
   isVerified: boolean("is_verified").default(false),
+  lastIp: varchar("last_ip", { length: 255 }),
+  lastLogin: datetime("last_login"),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

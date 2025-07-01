@@ -25,6 +25,7 @@ export const users = mysqlTable("users", {
     .default("active"),
   isAgreeWithTerms: boolean("isAgreeWithTerms"),
   isLoggedIn: boolean("is_logged_in").default(false),
+  isVerified: boolean("is_verified").default(false),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -33,7 +34,7 @@ export const usersRelations = relations(users, ({ one }) => ({
     fields: [users.currency_id],
     references: [currency.id],
   }),
-  created_by: one(adminUsers, {
+  createdByUser: one(adminUsers, {
     fields: [users.created_by],
     references: [adminUsers.id],
   }),

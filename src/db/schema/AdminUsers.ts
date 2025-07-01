@@ -6,9 +6,18 @@ import {
   int,
   boolean,
   decimal,
+  mysqlEnum,
 } from "drizzle-orm/mysql-core";
 import { relations, sql } from "drizzle-orm";
 import { currency } from "./currency";
+
+// export const adminUsersRoles = mysqlEnum("admin_users_roles", [
+//   "admin",
+//   "superAgent",
+//   "agent",
+//   "superAffiliate",
+//   "affiliate",
+// ]);
 
 export const adminUsers = mysqlTable("admin_users", {
   id: serial("id").primaryKey().autoincrement(),
@@ -23,12 +32,22 @@ export const adminUsers = mysqlTable("admin_users", {
   minTrx: decimal("minimum_trx"),
   maxTrx: decimal("maximum_trx"),
   currency: int("currency"),
-  role: varchar("role", { length: 50 }).$type<
-    "admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate"
-  >(),
+  role: mysqlEnum("role", [
+    "admin",
+    "superAgent",
+    "agent",
+    "superAffiliate",
+    "affiliate",
+  ]),
   status: varchar("status", { length: 50 }).$type<"active" | "inactive">(),
+  createdBy: int("created_by"),
   isLoggedIn: boolean("is_logged_in").default(false),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const adminUsersRelations = relations(adminUsers, ({ one }) => ({}));
+export const adminUsersRelations = relations(adminUsers, ({ one }) => ({
+  createdByUser: one(adminUsers, {
+    fields: [adminUsers.createdBy],
+    references: [adminUsers.id],
+  }),
+}));

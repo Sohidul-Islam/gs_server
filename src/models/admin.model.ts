@@ -117,3 +117,8 @@ export const updateAdmin = async (
   await db.update(adminUsers).set(data).where(eq(adminUsers.id, id));
   return getAdminById(id);
 };
+
+export const deleteAdmin = async (id: number) => {
+  const result = await db.delete(adminUsers).where(eq(adminUsers.id, id));
+  return result;
+};

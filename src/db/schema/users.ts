@@ -20,7 +20,9 @@ export const users = mysqlTable("users", {
   currency_id: int("currency_id"),
   refer_code: varchar("refer_code", { length: 50 }),
   created_by: int("created_by"),
-  status: varchar("status", { length: 50 }).$type<"active" | "inactive">(),
+  status: varchar("status", { length: 50 })
+    .$type<"active" | "inactive">()
+    .default("active"),
   isAgreeWithTerms: boolean("isAgreeWithTerms"),
   isLoggedIn: boolean("is_logged_in").default(false),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),

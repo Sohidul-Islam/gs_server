@@ -7,6 +7,7 @@ import {
   getAdminById,
   getAdminsWithFilters,
   updateAdmin,
+  deleteAdmin as deleteAdminModel,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers } from "../db/schema";
@@ -289,5 +290,29 @@ export const updateAdminProfile = async (
     res
       .status(500)
       .json({ status: false, message: "Failed to update admin", error });
+  }
+};
+
+export const deleteAdmin = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ status: false, message: "Missing admin id" });
+      return;
+    }
+    const result = await deleteAdminModel(Number(id));
+    if (!result) {
+      res
+        .status(404)
+        .json({ status: false, message: "Admin not found or not deleted" });
+      return;
+    }
+    res
+      .status(200)
+      .json({ status: true, message: "Admin deleted successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to delete admin", error });
   }
 };

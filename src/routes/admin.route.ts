@@ -10,6 +10,7 @@ import {
   getPlayers,
   getAdmins,
   updateAdminProfile,
+  deleteAdmin,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -23,5 +24,8 @@ router.get("/admins", asyncHandler(getAdmins));
 
 // Update admin by id
 router.post("/update/:id", verifyToken, asyncHandler(updateAdminProfile));
+
+// Delete admin by id
+router.post("/delete/:id", verifyToken, asyncHandler(deleteAdmin));
 
 export default router;

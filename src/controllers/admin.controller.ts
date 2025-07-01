@@ -14,6 +14,7 @@ import { adminUsers } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
+import * as UAParser from "ua-parser-js";
 
 export const adminRegistration = async (
   req: Request,
@@ -100,10 +101,37 @@ export const adminLogin = async (
       return;
     }
 
+    // --- Device Info Extraction ---
+    const userAgent = req.headers["user-agent"] || "";
+    const parser = new UAParser.UAParser(userAgent);
+    const uaResult = parser.getResult();
+    console.log({ uaResult });
+    const device_type = uaResult.device.type || "Desktop";
+    const device_name = uaResult.device.model || uaResult.os.name || "Unknown";
+    const os_version = uaResult.os.name
+      ? `${uaResult.os.name} ${uaResult.os.version || ""}`.trim()
+      : "Unknown";
+    const browser = uaResult.browser.name || "Unknown";
+    const browser_version = uaResult.browser.version || "Unknown";
+    // Get IP address
+    const ip_address =
+      req.headers["x-forwarded-for"]?.toString().split(",")[0] ||
+      req.socket.remoteAddress ||
+      "Unknown";
+
     if (admin.id)
       await db
         .update(adminUsers)
-        .set({ isLoggedIn: true })
+        .set({
+          isLoggedIn: true,
+          device_type,
+          device_name,
+          os_version,
+          browser,
+          browser_version,
+          lastIp: ip_address,
+          lastLogin: new Date(),
+        })
         .where(eq(adminUsers.id, admin.id));
 
     const token = jwt.sign(

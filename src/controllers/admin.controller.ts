@@ -6,6 +6,7 @@ import {
   createAdmin,
   getAdminById,
   getAdminsWithFilters,
+  updateAdmin,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers } from "../db/schema";
@@ -47,13 +48,13 @@ export const adminRegistration = async (
         .json({ status: false, message: "Admin user already exists" });
       return;
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // const hashedPassword = await bcrypt.hash(password, 10);
     const admin = await createAdmin({
       username,
       fullname,
       phone,
       email,
-      password: hashedPassword,
+      password: password,
       role,
       country,
       city,
@@ -255,5 +256,38 @@ export const getAdmins = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch admins", error });
+  }
+};
+
+export const updateAdminProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ status: false, message: "Missing admin id" });
+      return;
+    }
+    const updateData = { ...req.body };
+    // If password is present, hash it
+    // if (updateData.password) {
+    //   updateData.password = await bcrypt.hash(updateData.password, 10);
+    // }
+    const updatedAdmin = await updateAdmin(Number(id), updateData);
+    if (!updatedAdmin) {
+      res.status(404).json({ status: false, message: "Admin not found" });
+      return;
+    }
+    res.status(200).json({
+      status: true,
+      message: "Admin updated successfully",
+      data: updatedAdmin,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to update admin", error });
   }
 };

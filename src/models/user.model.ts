@@ -5,18 +5,7 @@ import { users } from "../db/schema/users";
 import bcrypt from "bcryptjs";
 import { currency } from "../db/schema";
 import { sql } from "drizzle-orm";
-
-const pool = mysql.createPool({
-  uri: process.env.DATABASE_URL,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
-const db = drizzle(pool);
-
-export const getUsers = async () => {
-  return db.select().from(users);
-};
+import { db } from "../db/connection";
 
 export const findUserByUsernameOrEmail = async (usernameOrEmail: string) => {
   const [user] = await db
@@ -103,4 +92,32 @@ export const getUsersWithFilters = async (filters: UserFilters) => {
       total,
     },
   };
+};
+
+export const updateUser = async (
+  id: number,
+  data: Partial<{
+    username: string;
+    fullname: string;
+    phone: string;
+    email: string;
+    password: string;
+    currency_id: number;
+    refer_code?: string;
+    isAgreeWithTerms: boolean;
+    status: "active" | "inactive";
+    isLoggedIn: boolean;
+  }>
+) => {
+  if (data.password) {
+    // Optionally hash password if needed
+    // data.password = await bcrypt.hash(data.password, 10);
+  }
+  const [user] = await db.update(users).set(data).where(eq(users.id, id));
+  return user;
+};
+
+export const deleteUser = async (id: number) => {
+  const result = await db.delete(users).where(eq(users.id, id));
+  return result;
 };

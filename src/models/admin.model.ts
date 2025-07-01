@@ -95,3 +95,25 @@ export const getAdminsWithFilters = async (filters: AdminFilters) => {
     },
   };
 };
+
+export const updateAdmin = async (
+  id: number,
+  data: Partial<{
+    username: string;
+    fullname: string;
+    phone: string;
+    email: string;
+    password: string;
+    role: "admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate";
+    country?: string;
+    city?: string;
+    street?: string;
+    minTrx?: string;
+    maxTrx?: string;
+    currency?: number;
+    isLoggedIn?: boolean;
+  }>
+) => {
+  await db.update(adminUsers).set(data).where(eq(adminUsers.id, id));
+  return getAdminById(id);
+};

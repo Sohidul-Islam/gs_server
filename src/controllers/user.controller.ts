@@ -1,15 +1,17 @@
 import { Request, Response } from "express";
 import {
-  getUsers,
+  getUsersWithFilters,
   createUser,
   findUserByUsernameOrEmail,
+  updateUser as updateUserModel,
+  deleteUser as deleteUserModel,
 } from "../models/user.model";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await getUsers();
+    const users = await getUsersWithFilters({});
     return res.json({ status: true, users });
   } catch (error) {
     return res
@@ -110,5 +112,54 @@ export const loginUser = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(500).json({ status: false, message: "Failed to login" });
+  }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res
+        .status(400)
+        .json({ status: false, message: "User ID is required" });
+    }
+    const data = req.body;
+    const updated = await updateUserModel(Number(id), data);
+    if (!updated) {
+      return res
+        .status(404)
+        .json({ status: false, message: "User not found or not updated" });
+    }
+    return res.json({
+      status: true,
+      message: "User updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ status: false, message: "Failed to update user" });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res
+        .status(400)
+        .json({ status: false, message: "User ID is required" });
+    }
+    const result = await deleteUserModel(Number(id));
+    if (!result) {
+      return res
+        .status(404)
+        .json({ status: false, message: "User not found or not deleted" });
+    }
+    return res.json({ status: true, message: "User deleted successfully" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ status: false, message: "Failed to delete user" });
   }
 };

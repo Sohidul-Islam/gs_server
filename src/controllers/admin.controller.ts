@@ -16,6 +16,28 @@ import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
 
+export function getClientIp(req: Request): string {
+  let ip =
+    (req.headers["x-forwarded-for"] as string)
+      ?.split(",")
+      .map((s) => s.trim())[0] ||
+    (req.headers["x-real-ip"] as string) ||
+    req.socket?.remoteAddress ||
+    (req.connection as any)?.remoteAddress ||
+    req.ip ||
+    "Unknown";
+
+  // Normalize IPv6 localhost
+  if (ip === "::1" || ip === "0:0:0:0:0:0:0:1") {
+    ip = "127.0.0.1";
+  }
+  // Remove IPv6 prefix if present (e.g., "::ffff:192.168.1.1")
+  if (ip.startsWith("::ffff:")) {
+    ip = ip.replace("::ffff:", "");
+  }
+  return ip;
+}
+
 export const adminRegistration = async (
   req: Request,
   res: Response
@@ -114,10 +136,7 @@ export const adminLogin = async (
     const browser = uaResult.browser.name || "Unknown";
     const browser_version = uaResult.browser.version || "Unknown";
     // Get IP address
-    const ip_address =
-      req.headers["x-forwarded-for"]?.toString().split(",")[0] ||
-      req.socket.remoteAddress ||
-      "Unknown";
+    const ip_address = getClientIp(req);
 
     if (admin.id)
       await db

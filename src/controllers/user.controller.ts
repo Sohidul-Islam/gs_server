@@ -8,6 +8,10 @@ import {
 } from "../models/user.model";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import * as UAParser from "ua-parser-js";
+import { db } from "../db/connection";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -75,6 +79,25 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
+export function getClientIp(req: Request): string {
+  let ip =
+    (req.headers["x-forwarded-for"] as string)
+      ?.split(",")
+      .map((s) => s.trim())[0] ||
+    (req.headers["x-real-ip"] as string) ||
+    req.socket?.remoteAddress ||
+    (req.connection as any)?.remoteAddress ||
+    req.ip ||
+    "Unknown";
+  if (ip === "::1" || ip === "0:0:0:0:0:0:0:1") {
+    ip = "127.0.0.1";
+  }
+  if (ip.startsWith("::ffff:")) {
+    ip = ip.replace("::ffff:", "");
+  }
+  return ip;
+}
+
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { userNameOrEmailorPhone, password } = req.body;
@@ -90,25 +113,58 @@ export const loginUser = async (req: Request, res: Response) => {
         .status(401)
         .json({ status: false, message: "Invalid credentials" });
     }
-
     const isMatch = password === user.password;
-
     if (!isMatch) {
       return res
         .status(401)
         .json({ status: false, message: "Invalid credentials" });
     }
+    // --- Device Info Extraction ---
+    const userAgent = req.headers["user-agent"] || "";
+    const parser = new UAParser.UAParser(userAgent);
+    const uaResult = parser.getResult();
+    const device_type = uaResult.device.type || "Desktop";
+    const device_name = uaResult.device.model || uaResult.os.name || "Unknown";
+    const os_version = uaResult.os.name
+      ? `${uaResult.os.name} ${uaResult.os.version || ""}`.trim()
+      : "Unknown";
+    const browser = uaResult.browser.name || "Unknown";
+    const browser_version = uaResult.browser.version || "Unknown";
+    const ip_address = getClientIp(req);
+    // You can now use device_type, device_name, os_version, browser, browser_version, ip_address as needed (e.g., log, save to DB, etc.)
     const token = jwt.sign(
       { id: user.id, email: user.email, username: user.username },
       process.env.JWT_SECRET || "your_jwt_secret",
       { expiresIn: "1h" }
     );
 
+    await db
+      .update(users)
+      .set({
+        isLoggedIn: true,
+        device_type,
+        device_name,
+        os_version,
+        browser,
+        browser_version,
+        lastIp: ip_address,
+        lastLogin: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
     return res.json({
       status: true,
       message: "Login successful",
       data: user,
       accessToken: token,
+      device: {
+        device_type,
+        device_name,
+        os_version,
+        browser,
+        browser_version,
+        ip_address,
+      },
     });
   } catch (error) {
     return res.status(500).json({ status: false, message: "Failed to login" });

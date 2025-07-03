@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, or, and, like } from "drizzle-orm";
+import { eq, or, and, like, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { adminUsers } from "../db/schema";
 import { db } from "../db/connection";
@@ -49,17 +49,35 @@ export const getAdminById = async (id: number) => {
   return admin;
 };
 
+export type AdminRole =
+  | "admin"
+  | "superAgent"
+  | "agent"
+  | "superAffiliate"
+  | "affiliate";
+
 export interface AdminFilters {
-  role?: "admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate";
+  role?: AdminRole | AdminRole[]; // Accepts single role or array of roles
+  roleList?: AdminRole[];
   page?: number;
   pageSize?: number;
   searchKeyword?: string;
 }
 
 export const getAdminsWithFilters = async (filters: AdminFilters) => {
-  const { role, page = 1, pageSize = 10, searchKeyword } = filters;
+  const { role, roleList, page = 1, pageSize = 10, searchKeyword } = filters;
   const whereClauses = [];
-  if (role) whereClauses.push(eq(adminUsers.role, role));
+  if (role)
+    whereClauses.push(
+      Array.isArray(role)
+        ? role.length > 0 && inArray(adminUsers.role, role)
+        : eq(adminUsers.role, role)
+    );
+
+  if (roleList && roleList?.length > 0) {
+    whereClauses.push(inArray(adminUsers.role, [...roleList]));
+  }
+
   if (searchKeyword) {
     const kw = `%${searchKeyword}%`;
     whereClauses.push(
@@ -71,7 +89,14 @@ export const getAdminsWithFilters = async (filters: AdminFilters) => {
       )
     );
   }
-  const where = whereClauses.length ? and(...whereClauses) : undefined;
+  // Filter out any falsey (e.g., false) values from whereClauses to avoid boolean in and()
+  const filteredWhereClauses = whereClauses.filter(
+    (clause): clause is Exclude<typeof clause, boolean | undefined> =>
+      Boolean(clause)
+  );
+  const where = filteredWhereClauses.length
+    ? and(...filteredWhereClauses)
+    : undefined;
   // Get total count
   const total = await db
     .select({ count: sql`COUNT(*)` })

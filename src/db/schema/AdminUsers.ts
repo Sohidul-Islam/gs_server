@@ -17,8 +17,8 @@ export const adminUsers = mysqlTable("admin_users", {
 
   username: varchar("username", { length: 50 }),
   fullname: varchar("fullname", { length: 100 }),
-  phone: varchar("phone", { length: 20 }),
-  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 20 }).unique(),
+  email: varchar("email", { length: 255 }).unique(),
   password: varchar("password", { length: 255 }),
 
   country: varchar("country", { length: 255 }),

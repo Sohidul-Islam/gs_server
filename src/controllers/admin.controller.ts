@@ -8,6 +8,7 @@ import {
   getAdminsWithFilters,
   updateAdmin,
   deleteAdmin as deleteAdminModel,
+  AdminRole,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers } from "../db/schema";
@@ -304,12 +305,11 @@ export const getAdmins = async (req: Request, res: Response) => {
   try {
     const { role, page = 1, pageSize = 10, keyword } = req.query;
     const filters = {
-      role: role as
-        | ("admin" | "superAgent" | "agent" | "superAffiliate" | "affiliate")
-        | undefined,
+      role: role as AdminRole | undefined,
       page: page ? Number(page) : 1,
       pageSize: pageSize ? Number(pageSize) : 10,
       searchKeyword: keyword as string | undefined,
+      roleList: ["admin"] as AdminRole[],
     };
     const result = await getAdminsWithFilters(filters);
     res.json({ status: true, ...result });
@@ -317,6 +317,42 @@ export const getAdmins = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch admins", error });
+  }
+};
+
+export const getAgents = async (req: Request, res: Response) => {
+  try {
+    let { role, page = 1, pageSize = 10, keyword } = req.query;
+    let roles: ("superAgent" | "agent")[] = ["superAgent", "agent"];
+    let roleFilter:
+      | ("superAgent" | "agent")
+      | ("superAgent" | "agent")[]
+      | undefined = ["superAgent", "agent"];
+
+    if (role) {
+      roleFilter = role as "superAgent" | "agent";
+    }
+
+    const filters = {
+      role: roleFilter,
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 10,
+      searchKeyword: keyword as string | undefined,
+      roleList: ["superAgent", "agent"] as AdminRole[],
+    };
+
+    const result = await getAdminsWithFilters(filters);
+    // If no role is specified, filter the result to only include superAgent and agent
+    if (!roleFilter && result?.data) {
+      result.data = result.data.filter((admin: any) =>
+        roles.includes(admin.role)
+      );
+    }
+    res.json({ status: true, ...result });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to fetch agents", error });
   }
 };
 

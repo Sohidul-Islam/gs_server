@@ -32,9 +32,11 @@ export const createAdmin = async (data: {
   minTrx?: string;
   maxTrx?: string;
   currency?: number;
+  createdBy?: number;
 }) => {
   const [admin] = await db.insert(adminUsers).values({
     ...data,
+    createdBy: data?.createdBy,
   });
   return admin;
 };

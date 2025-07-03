@@ -17,14 +17,25 @@ import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
 
 export function getClientIp(req: Request): string {
-  let ip =
-    (req.headers["x-forwarded-for"] as string)
+  const ipSource = {
+    xForwardFor: (req.headers["x-forwarded-for"] as string)
       ?.split(",")
-      .map((s) => s.trim())[0] ||
-    (req.headers["x-real-ip"] as string) ||
-    req.socket?.remoteAddress ||
-    (req.connection as any)?.remoteAddress ||
-    req.ip ||
+      .map((s) => s.trim())[0],
+    xRealIp: req.headers["x-real-ip"] as string,
+    remoteAddress: req.socket?.remoteAddress,
+    remoteAddressConnection: (req.connection as any)?.remoteAddress,
+    ip: req.ip,
+  };
+  console.log({
+    ipSource,
+    reqAgent: req.headers["user-agent"],
+  });
+  let ip =
+    ipSource.xForwardFor ||
+    ipSource.xRealIp ||
+    ipSource.remoteAddress ||
+    ipSource.remoteAddressConnection ||
+    ipSource.ip ||
     "Unknown";
 
   // Normalize IPv6 localhost
@@ -56,6 +67,7 @@ export const adminRegistration = async (
       minTrx,
       maxTrx,
       currency,
+      createdBy,
     } = req.body;
     if (!username || !fullname || !phone || !email || !password || !role) {
       res
@@ -86,6 +98,7 @@ export const adminRegistration = async (
       minTrx: minTrx !== undefined ? String(minTrx) : undefined,
       maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
       currency,
+      createdBy,
     });
     res.status(201).json({
       status: true,

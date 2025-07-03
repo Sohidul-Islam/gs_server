@@ -31,10 +31,12 @@ export const createUser = async (data: {
   currency_id: number;
   refer_code?: string;
   isAgreeWithTerms: boolean;
+  createdBy?: number;
 }) => {
   // const hashedPassword = await bcrypt.hash(data.password, 10);
   const [user] = await db.insert(users).values({
     ...data,
+    created_by: data?.createdBy,
     // password: hashedPassword,
   });
 

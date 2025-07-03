@@ -35,6 +35,7 @@ export const registerUser = async (req: Request, res: Response) => {
       currency_id,
       refer_code,
       isAgreeWithTerms,
+      createdBy,
     } = req.body;
     if (
       !username ||
@@ -66,6 +67,7 @@ export const registerUser = async (req: Request, res: Response) => {
       currency_id,
       refer_code,
       isAgreeWithTerms,
+      createdBy,
     });
     return res.status(201).json({
       status: true,

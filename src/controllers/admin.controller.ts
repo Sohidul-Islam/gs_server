@@ -16,6 +16,7 @@ import { eq } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
+import { DecodedUser } from "../middlewares/verifyToken";
 
 export function getClientIp(req: Request): string {
   const ipSource = {
@@ -70,12 +71,61 @@ export const adminRegistration = async (
       currency,
       createdBy,
     } = req.body;
+
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
     if (!username || !fullname || !phone || !email || !password || !role) {
       res
         .status(400)
         .json({ status: false, message: "Missing required fields" });
       return;
     }
+
+    if (
+      userData?.role === "superAgent" &&
+      ["admin", "superAgent", "superAffiliate", "affiliate"].includes(role)
+    ) {
+      res
+        .status(400)
+        .json({ status: false, message: `Super agent can't create ${role}` });
+      return;
+    }
+
+    if (
+      userData?.role === "agent" &&
+      ["admin", "superAgent", "agent", "superAffiliate", "affiliate"].includes(
+        role
+      )
+    ) {
+      res
+        .status(400)
+        .json({ status: false, message: `Agent can't create ${role}` });
+      return;
+    }
+
+    if (
+      userData?.role === "superAffiliate" &&
+      ["admin", "superAgent", "agent", "superAffiliate"].includes(role)
+    ) {
+      res.status(400).json({
+        status: false,
+        message: `Super Affiliate can't create ${role}`,
+      });
+      return;
+    }
+
+    if (
+      userData?.role === "affiliate" &&
+      ["admin", "superAgent", "agent", "superAffiliate", "affiliate"].includes(
+        role
+      )
+    ) {
+      res.status(400).json({
+        status: false,
+        message: `Affiliate can't create ${role}`,
+      });
+      return;
+    }
+
     const existing =
       (await findAdminByUsernameOrEmail(username)) ||
       (await findAdminByUsernameOrEmail(email));
@@ -289,11 +339,15 @@ export const getPlayers = async (
     page = 1,
     pageSize = 10,
   } = req.query;
+
+  const userData = (req as unknown as { user: DecodedUser }).user;
+
   const filters = {
     playerId: playerId ? Number(playerId) : undefined,
     phone: phone as string | undefined,
     status: status as string | undefined,
     keyword: keyword as string | undefined,
+    createdBy: userData.role !== "admin" ? userData.id : undefined,
     page: page ? Number(page) : 1,
     pageSize: pageSize ? Number(pageSize) : 10,
   };

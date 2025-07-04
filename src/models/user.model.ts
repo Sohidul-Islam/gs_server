@@ -48,16 +48,28 @@ export interface UserFilters {
   phone?: string;
   status?: string;
   keyword?: string;
+  createdBy?: number;
   page?: number;
   pageSize?: number;
 }
 
 export const getUsersWithFilters = async (filters: UserFilters) => {
-  const { playerId, phone, status, keyword, page = 1, pageSize = 10 } = filters;
+  const {
+    playerId,
+    phone,
+    status,
+    keyword,
+    page = 1,
+    pageSize = 10,
+    createdBy,
+  } = filters;
+
   const whereClauses = [];
+
   if (playerId) whereClauses.push(eq(users.id, playerId));
   if (phone) whereClauses.push(eq(users.phone, phone));
   if (status) whereClauses.push(eq(users.status as any, status));
+  if (createdBy) whereClauses.push(eq(users.created_by, createdBy));
   if (keyword) {
     const kw = `%${keyword}%`;
     whereClauses.push(

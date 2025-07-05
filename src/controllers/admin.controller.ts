@@ -70,6 +70,8 @@ export const adminRegistration = async (
       maxTrx,
       currency,
       createdBy,
+      status,
+      refCode,
     } = req.body;
 
     const userData = (req as unknown as { user: DecodedUser | null })?.user;
@@ -150,6 +152,8 @@ export const adminRegistration = async (
       maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
       currency,
       createdBy,
+      refCode,
+      status,
     });
     res.status(201).json({
       status: true,

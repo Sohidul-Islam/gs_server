@@ -33,6 +33,8 @@ export const createAdmin = async (data: {
   maxTrx?: string;
   currency?: number;
   createdBy?: number;
+  status?: "active" | "inactive";
+  refCode?: string;
 }) => {
   const [admin] = await db.insert(adminUsers).values({
     ...data,
@@ -139,6 +141,8 @@ export const updateAdmin = async (
     maxTrx?: string;
     currency?: number;
     isLoggedIn?: boolean;
+    refCode?: string;
+    status?: "active" | "inactive";
   }>
 ) => {
   await db.update(adminUsers).set(data).where(eq(adminUsers.id, id));

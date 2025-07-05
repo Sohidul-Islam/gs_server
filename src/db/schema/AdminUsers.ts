@@ -37,7 +37,8 @@ export const adminUsers = mysqlTable("admin_users", {
     "affiliate",
   ]),
 
-  status: mysqlEnum("status", ["active", "inactive"]),
+  status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
+  refCode: varchar("ref_code", { length: 255 }),
 
   isLoggedIn: boolean("is_logged_in").default(false),
   isVerified: boolean("is_verified").default(false),

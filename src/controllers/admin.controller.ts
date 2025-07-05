@@ -206,6 +206,11 @@ export const adminLogin = async (
     // Get IP address
     const ip_address = getClientIp(req);
 
+    if (admin.status !== "active") {
+      res.status(401).json({ status: false, message: "User is inactive" });
+      return;
+    }
+
     if (admin.id)
       await db
         .update(adminUsers)
@@ -306,15 +311,23 @@ export const adminProfile = async (
   }
   try {
     const admin = await getAdminById(user.id);
-    // console.log({ admin });
+    console.log({ admin });
 
-    if (admin?.id)
-      res.status(200).json({
-        status: true,
-        message: "Profile fetched successfully",
-        data: admin,
-      });
-    else {
+    if (admin?.id) {
+      if (admin.status === "active") {
+        res.status(200).json({
+          status: true,
+          message: "Profile fetched successfully",
+          data: admin,
+        });
+      } else {
+        res.status(401).json({
+          status: false,
+          message: "User is inactive",
+          data: null,
+        });
+      }
+    } else {
       res.status(200).json({
         status: false,
         message: "Profile not found",
@@ -380,7 +393,7 @@ export const getAdmins = async (req: Request, res: Response) => {
 
 export const getAgents = async (req: Request, res: Response) => {
   try {
-    let { role, page = 1, pageSize = 10, keyword } = req.query;
+    let { role, page = 1, pageSize = 10, keyword, status } = req.query;
     let roles: ("superAgent" | "agent")[] = ["superAgent", "agent"];
     let roleFilter:
       | ("superAgent" | "agent")
@@ -391,12 +404,22 @@ export const getAgents = async (req: Request, res: Response) => {
       roleFilter = role as "superAgent" | "agent";
     }
 
+    // Validate and sanitize status
+    const validStatuses = ["active", "inactive"];
+
+    // Ensure status is valid
+    let statusFilter: "active" | "inactive" | undefined = undefined;
+    if (status && validStatuses.includes(status as any)) {
+      statusFilter = status as "active" | "inactive";
+    }
+
     const filters = {
       role: roleFilter,
       page: page ? Number(page) : 1,
       pageSize: pageSize ? Number(pageSize) : 10,
       searchKeyword: keyword as string | undefined,
       roleList: ["superAgent", "agent"] as AdminRole[],
+      status: statusFilter,
     };
 
     const result = await getAdminsWithFilters(filters);
@@ -411,6 +434,55 @@ export const getAgents = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch agents", error });
+  }
+};
+
+export const getAffiliates = async (req: Request, res: Response) => {
+  try {
+    let { role, page = 1, pageSize = 10, keyword, status } = req.query;
+    let roles: ("superAffiliate" | "affiliate")[] = [
+      "superAffiliate",
+      "affiliate",
+    ];
+    let roleFilter:
+      | ("superAffiliate" | "affiliate")
+      | ("superAffiliate" | "affiliate")[]
+      | undefined = ["superAffiliate", "affiliate"];
+
+    if (role) {
+      roleFilter = role as "superAffiliate" | "affiliate";
+    }
+
+    // Validate and sanitize status
+    const validStatuses = ["active", "inactive"];
+
+    // Ensure status is valid
+    let statusFilter: "active" | "inactive" | undefined = undefined;
+    if (status && validStatuses.includes(status as any)) {
+      statusFilter = status as "active" | "inactive";
+    }
+
+    const filters = {
+      role: roleFilter,
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 10,
+      searchKeyword: keyword as string | undefined,
+      roleList: ["superAffiliate", "affiliate"] as AdminRole[],
+      status: statusFilter,
+    };
+
+    const result = await getAdminsWithFilters(filters);
+    // If no role is specified, filter the result to only include superAffiliate and affiliate
+    if (!roleFilter && result?.data) {
+      result.data = result.data.filter((admin: any) =>
+        roles.includes(admin.role)
+      );
+    }
+    res.json({ status: true, ...result });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to fetch affiliates", error });
   }
 };
 

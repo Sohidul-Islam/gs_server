@@ -38,7 +38,7 @@ export const adminUsers = mysqlTable("admin_users", {
   ]),
 
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
-  refCode: varchar("ref_code", { length: 255 }),
+  refCode: varchar("ref_code", { length: 255 }).unique(),
 
   isLoggedIn: boolean("is_logged_in").default(false),
   isVerified: boolean("is_verified").default(false),

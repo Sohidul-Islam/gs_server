@@ -64,10 +64,18 @@ export interface AdminFilters {
   page?: number;
   pageSize?: number;
   searchKeyword?: string;
+  status?: "active" | "inactive";
 }
 
 export const getAdminsWithFilters = async (filters: AdminFilters) => {
-  const { role, roleList, page = 1, pageSize = 10, searchKeyword } = filters;
+  const {
+    role,
+    roleList,
+    page = 1,
+    pageSize = 10,
+    searchKeyword,
+    status,
+  } = filters;
   const whereClauses = [];
   if (role)
     whereClauses.push(
@@ -90,6 +98,9 @@ export const getAdminsWithFilters = async (filters: AdminFilters) => {
         like(adminUsers.phone, kw)
       )
     );
+  }
+  if (status) {
+    whereClauses.push(eq(adminUsers.status, status));
   }
   // Filter out any falsey (e.g., false) values from whereClauses to avoid boolean in and()
   const filteredWhereClauses = whereClauses.filter(

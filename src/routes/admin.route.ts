@@ -17,8 +17,10 @@ import {
 
 const router = Router();
 
+// withtout verification token
 router.post("/login", asyncHandler(adminLogin));
 router.post("/registration", asyncHandler(adminRegistration));
+// with token
 router.post("/create-agent", verifyToken, asyncHandler(adminRegistration));
 router.post("/create-admin", verifyToken, asyncHandler(adminRegistration));
 router.post("/logout", verifyToken, asyncHandler(adminLogout));

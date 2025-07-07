@@ -11,6 +11,6 @@ export const countries = mysqlTable("countries", {
   id: serial("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 100 }).notNull(),
   flagUrl: text("flag_url"),
-  currencyId: int("currency_id").notNull(),
+  currencyId: int("currency_id"),
   status: mysqlEnum("status", ["active", "inactive"]).default("active"),
 });

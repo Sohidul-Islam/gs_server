@@ -103,7 +103,7 @@ const seedCountryData = async () => {
     String,
     {
       name: String;
-      flagUrl: String;
+      flagUrl: any;
       currencyId: Number;
       status: String;
     }
@@ -133,7 +133,7 @@ const seedCountryData = async () => {
     insertAbleCountryData.map((c) => ({
       name: String(c.name),
       flagUrl: String(c.flagUrl || ""),
-      currencyId: Number(c.currencyId),
+      currencyId: Number(c.currencyId) || null,
       status: "active" as "active",
     }))
   );

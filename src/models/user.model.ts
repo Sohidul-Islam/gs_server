@@ -3,7 +3,7 @@ import mysql from "mysql2/promise";
 import { eq, or, and, like } from "drizzle-orm";
 import { users } from "../db/schema/users";
 import bcrypt from "bcryptjs";
-import { currency } from "../db/schema";
+
 import { sql } from "drizzle-orm";
 import { db } from "../db/connection";
 

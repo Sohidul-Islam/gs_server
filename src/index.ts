@@ -11,6 +11,7 @@ import { Request, Response, NextFunction } from "express";
 // Routes import
 import userRouter from "./routes/user.route";
 import adminRouter from "./routes/admin.route";
+import countryRouter from "./routes/country.route";
 import { errorHandler } from "./middlewares/errorHandler";
 // Ensure process.env.DATABASE_URL is defined and of correct type
 if (!process.env.DATABASE_URL) {
@@ -63,6 +64,8 @@ app.use("/api/users", userRouter);
 // Admin routes (to be implemented in controllers/routes)
 
 app.use("/api/admin", adminRouter);
+
+app.use("/api/countries", countryRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Fashion Glory API!");

@@ -10,7 +10,6 @@ import {
   text,
 } from "drizzle-orm/mysql-core";
 import { relations, sql } from "drizzle-orm";
-import { currency } from "./currency";
 
 export const adminUsers = mysqlTable("admin_users", {
   id: serial("id").primaryKey().autoincrement(),

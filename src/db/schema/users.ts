@@ -9,8 +9,9 @@ import {
   mysqlEnum,
 } from "drizzle-orm/mysql-core";
 import { relations, sql } from "drizzle-orm";
-import { currency } from "./currency";
+
 import { adminUsers } from "./AdminUsers";
+import { currencies } from "./currency";
 
 export const users = mysqlTable("users", {
   id: serial("id").primaryKey().autoincrement(),
@@ -41,9 +42,9 @@ export const users = mysqlTable("users", {
 });
 
 export const usersRelations = relations(users, ({ one }) => ({
-  currency: one(currency, {
+  currency: one(currencies, {
     fields: [users.currency_id],
-    references: [currency.id],
+    references: [currencies.id],
   }),
   createdByUser: one(adminUsers, {
     fields: [users.created_by],

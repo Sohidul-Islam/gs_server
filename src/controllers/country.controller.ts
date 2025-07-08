@@ -6,12 +6,22 @@ import {
   languages,
   countryLanguages,
 } from "../models/country.model";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { getAllCurrencies, getAllLanguages } from "../models/country.model";
 
 export const getAllCountries = async (req: Request, res: Response) => {
   try {
-    // Fetch all countries with their currency and languages
-    const countryRows = await db.select().from(countries);
+    const status = req.query.status as "active" | "inactive" | undefined;
+    // Only allow valid status values
+    const validStatus =
+      status === "active" || status === "inactive" ? status : undefined;
+    // Fetch all countries with optional status filter
+    const countryRows = validStatus
+      ? await db
+          .select()
+          .from(countries)
+          .where(eq(countries.status, validStatus))
+      : await db.select().from(countries);
     const result = await Promise.all(
       countryRows.map(async (country) => {
         let currency = null;
@@ -146,4 +156,75 @@ export const updateCountry = async (req: Request, res: Response) => {
 export const deleteCountry = async (req: Request, res: Response) => {
   // TODO: Implement delete
   res.status(204).send();
+};
+
+export const getAllCurrenciesHandler = async (req: Request, res: Response) => {
+  try {
+    const status = req.query.status as "active" | "inactive" | undefined;
+    const searchKey = req.query.searchKey as string | undefined;
+    const currencies = await getAllCurrencies(db, status, searchKey);
+    res.json({
+      status: true,
+      data: currencies,
+      message: "Currency data fetched!",
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch currencies", errors: err });
+  }
+};
+
+export const getAllLanguagesHandler = async (req: Request, res: Response) => {
+  try {
+    const status = req.query.status as "active" | "inactive" | undefined;
+    const searchKey = req.query.searchKey as string | undefined;
+    const languages = await getAllLanguages(db, status, searchKey);
+    res.json({
+      status: true,
+      data: languages,
+      message: "Languages data fetched",
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch languages", errors: err });
+  }
+};
+
+export const assignCountryLanguage = async (req: Request, res: Response) => {
+  try {
+    const { countryId, languageId, status } = req.body;
+    if (!countryId || !languageId || !status) {
+      return res
+        .status(400)
+        .json({ error: "countryId, languageId, and status are required" });
+    }
+    // Upsert: check if exists, update if so, else insert
+    const existing = await db
+      .select()
+      .from(countryLanguages)
+      .where(
+        and(
+          eq(countryLanguages.countryId, countryId),
+          eq(countryLanguages.languageId, languageId)
+        )
+      );
+    if (existing.length > 0) {
+      await db
+        .update(countryLanguages)
+        .set({ status })
+        .where(
+          and(
+            eq(countryLanguages.countryId, countryId),
+            eq(countryLanguages.languageId, languageId)
+          )
+        );
+    } else {
+      await db
+        .insert(countryLanguages)
+        .values({ countryId, languageId, status });
+    }
+    res
+      .status(201)
+      .json({ message: "Language assigned to country successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to assign language to country" });
+  }
 };

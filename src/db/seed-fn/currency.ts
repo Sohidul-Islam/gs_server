@@ -1,12 +1,12 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "../connection";
-import { countries, currencies } from "../schema";
+import { countries, currencies, languages } from "../schema";
 // @ts-ignore
 import countryJson from "../../assets/countries.json";
 // @ts-ignore
 import commonCurrency from "../../assets/Common-Currency.json";
-
-import { count } from "console";
+// @ts-ignore
+import languageJson from "../../assets/ISO-639-1-language.json";
 
 type CurrencyDetail = {
   symbol: string;
@@ -38,8 +38,14 @@ export type Country = {
   flag?: string; // Optional, since it's incomplete in your example
 };
 
+export type LanguageCode = {
+  code: string;
+  name: string;
+};
+
 const countryData = countryJson as Country[];
 const currencyDetailsData = commonCurrency as CurrencyMapData;
+const languageData = languageJson as LanguageCode[];
 
 const seedCurrencyData = async () => {
   const currencyMap = new Map<
@@ -129,16 +135,45 @@ const seedCountryData = async () => {
 
   const insertAbleCountryData = Array.from(CountryMap.values());
 
-  const result = await db.insert(countries).values(
-    insertAbleCountryData.map((c) => ({
-      name: String(c.name),
-      flagUrl: String(c.flagUrl || ""),
-      currencyId: Number(c.currencyId) || null,
-      status: "active" as "active",
-    }))
-  );
+  const result = await db
+    .insert(countries)
+    .values(
+      insertAbleCountryData.map((c) => ({
+        name: String(c.name),
+        flagUrl: String(c.flagUrl || ""),
+        currencyId: Number(c.currencyId) || null,
+        status: "active" as "active",
+      }))
+    )
+    .onDuplicateKeyUpdate({
+      set: {
+        name: sql`values(${countries.name})`,
+      },
+    });
 
   console.log("✅ Country seed data inserted successfully!");
+
+  return result;
+};
+
+const seedLanguageData = async () => {
+  const result = await db
+    .insert(languages)
+    .values(
+      languageData.map((item) => ({
+        code: item.code,
+        name: item?.name,
+        status: "active" as "active" | "inactive",
+      }))
+    )
+    .onDuplicateKeyUpdate({
+      set: {
+        code: sql`values(${languages.code})`,
+        name: sql`values(${languages.name})`,
+      },
+    });
+
+  console.log("✅ Language seed data inserted successfully!");
 
   return result;
 };
@@ -150,6 +185,8 @@ export const seedCurrency = async () => {
     await seedCurrencyData();
 
     await seedCountryData();
+
+    await seedLanguageData();
 
     // console.log("✅ Currency seed data inserted successfully!");
   } catch (error) {

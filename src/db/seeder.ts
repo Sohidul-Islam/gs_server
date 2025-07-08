@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { db, pool } from "./connection";
-import { currency } from "./schema";
+
 import { seedUsers } from "./seed-fn/users";
 import { seedCurrency } from "./seed-fn/currency";
 import { seedAdminUsers } from "./seed-fn/adminUser";

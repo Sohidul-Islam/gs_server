@@ -6,7 +6,7 @@ import {
   languages,
   countryLanguages,
 } from "../models/country.model";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { getAllCurrencies, getAllLanguages } from "../models/country.model";
 
 export const getAllCountries = async (req: Request, res: Response) => {
@@ -226,5 +226,126 @@ export const assignCountryLanguage = async (req: Request, res: Response) => {
       .json({ message: "Language assigned to country successfully." });
   } catch (err) {
     res.status(500).json({ error: "Failed to assign language to country" });
+  }
+};
+
+// Update country status
+export const updateCountryStatus = async (req: Request, res: Response) => {
+  try {
+    const { id, status } = req.body;
+    if (!id || !status) {
+      return res.status(400).json({ error: "id and status are required" });
+    }
+    await db.update(countries).set({ status }).where(eq(countries.id, id));
+    const updated = await db
+      .select()
+      .from(countries)
+      .where(eq(countries.id, id));
+    res.json({
+      status: true,
+      data: updated[0],
+      message: "Country status updated",
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to update country status", errors: err });
+  }
+};
+
+// Update language status
+export const updateLanguageStatus = async (req: Request, res: Response) => {
+  try {
+    const { id, status } = req.body;
+    if (!id || !status) {
+      return res.status(400).json({ error: "id and status are required" });
+    }
+    await db.update(languages).set({ status }).where(eq(languages.id, id));
+    const updated = await db
+      .select()
+      .from(languages)
+      .where(eq(languages.id, id));
+    res.json({
+      status: true,
+      data: updated[0],
+      message: "Language status updated",
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to update language status", errors: err });
+  }
+};
+
+// Update currency status
+export const updateCurrencyStatus = async (req: Request, res: Response) => {
+  try {
+    const { id, status } = req.body;
+    if (!id || !status) {
+      return res.status(400).json({ error: "id and status are required" });
+    }
+    await db.update(currencies).set({ status }).where(eq(currencies.id, id));
+    const updated = await db
+      .select()
+      .from(currencies)
+      .where(eq(currencies.id, id));
+    res.json({
+      status: true,
+      data: updated[0],
+      message: "Currency status updated",
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to update currency status", errors: err });
+  }
+};
+
+// Update country_language status
+export const updateCountryLanguageStatus = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, countryId, languageId, status } = req.body;
+    if (!id || !countryId || !languageId || !status) {
+      return res
+        .status(400)
+        .json({ error: "id, countryId, languageId, and status are required" });
+    }
+    // Check for duplicate combination (excluding current record)
+    const duplicate = await db
+      .select()
+      .from(countryLanguages)
+      .where(
+        and(
+          eq(countryLanguages.countryId, countryId),
+          eq(countryLanguages.languageId, languageId),
+          sql`${countryLanguages.id} != ${id}`
+        )
+      );
+    if (duplicate.length > 0) {
+      return res
+        .status(409)
+        .json({ error: "This country-language combination already exists." });
+    }
+    // Update the record by id
+    await db
+      .update(countryLanguages)
+      .set({ countryId, languageId, status })
+      .where(eq(countryLanguages.id, id));
+    const updated = await db
+      .select()
+      .from(countryLanguages)
+      .where(eq(countryLanguages.id, id));
+    res.json({
+      status: true,
+      data: updated[0],
+      message: "Country-language status updated",
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to update country-language status", errors: err });
   }
 };

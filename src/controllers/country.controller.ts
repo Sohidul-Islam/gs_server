@@ -14,14 +14,20 @@ export const getAllCountries = async (req: Request, res: Response) => {
     const countryRows = await db.select().from(countries);
     const result = await Promise.all(
       countryRows.map(async (country) => {
-        const currency = await db
-          .select()
-          .from(currencies)
-          .where(eq(currencies.id, country.currencyId));
+        let currency = null;
+        if (country.currencyId !== null) {
+          const currencyResult = await db
+            .select()
+            .from(currencies)
+            .where(eq(currencies.id, country.currencyId));
+          currency = currencyResult[0] || null;
+        }
+
         const langLinks = await db
           .select()
           .from(countryLanguages)
           .where(eq(countryLanguages.countryId, country.id));
+
         const langs = await Promise.all(
           langLinks.map(async (cl) => {
             const lang = await db
@@ -31,9 +37,10 @@ export const getAllCountries = async (req: Request, res: Response) => {
             return lang[0];
           })
         );
+
         return {
           ...country,
-          currency: currency[0],
+          currency,
           languages: langs,
         };
       })
@@ -51,17 +58,26 @@ export const getCountryById = async (req: Request, res: Response) => {
       .select()
       .from(countries)
       .where(eq(countries.id, id));
+
     if (!countryRows.length)
       return res.status(404).json({ error: "Country not found" });
+
     const country = countryRows[0];
-    const currency = await db
-      .select()
-      .from(currencies)
-      .where(eq(currencies.id, country.currencyId));
+
+    let currency = null;
+    if (country.currencyId !== null) {
+      const currencyResult = await db
+        .select()
+        .from(currencies)
+        .where(eq(currencies.id, country.currencyId));
+      currency = currencyResult[0] || null;
+    }
+
     const langLinks = await db
       .select()
       .from(countryLanguages)
       .where(eq(countryLanguages.countryId, country.id));
+
     const langs = await Promise.all(
       langLinks.map(async (cl) => {
         const lang = await db
@@ -71,10 +87,11 @@ export const getCountryById = async (req: Request, res: Response) => {
         return lang[0];
       })
     );
+
     res.status(200).json({
       data: {
         ...country,
-        currency: currency[0],
+        currency,
         languages: langs,
       },
       status: true,

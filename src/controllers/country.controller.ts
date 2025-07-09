@@ -6,7 +6,7 @@ import {
   languages,
   countryLanguages,
 } from "../models/country.model";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, not } from "drizzle-orm";
 import { getAllCurrencies, getAllLanguages } from "../models/country.model";
 
 export const getAllCountries = async (req: Request, res: Response) => {
@@ -321,7 +321,7 @@ export const updateCountryLanguageStatus = async (
         and(
           eq(countryLanguages.countryId, countryId),
           eq(countryLanguages.languageId, languageId),
-          sql`${countryLanguages.id} != ${id}`
+          not(eq(countryLanguages.id, id))
         )
       );
     if (duplicate.length > 0) {

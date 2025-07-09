@@ -32,6 +32,6 @@ router.post(
 
 router.get("/currencies", asyncHandler(getAllCurrenciesHandler));
 router.get("/languages", asyncHandler(getAllLanguagesHandler));
-router.post("/country-languages", asyncHandler(assignCountryLanguage));
+router.post("/assign-country-languages", asyncHandler(assignCountryLanguage));
 
 export default router;

@@ -48,6 +48,7 @@ import {
   getAffiliates,
   addDropdownOption,
   getDropdownsList,
+  updateDropdownOptionStatus,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -68,6 +69,11 @@ router.get("/affiliates", verifyToken, asyncHandler(getAffiliates));
 // configuration
 router.post("/create-dropdowns", verifyToken, asyncHandler(addDropdownOption));
 router.get("/get-dropdowns", verifyToken, asyncHandler(getDropdownsList));
+router.patch(
+  "/update-dropdown-option-status/:id",
+  verifyToken,
+  asyncHandler(updateDropdownOptionStatus)
+);
 
 // Update admin by id
 router.post("/update/:id", verifyToken, asyncHandler(updateAdminProfile));

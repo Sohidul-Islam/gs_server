@@ -626,6 +626,60 @@ export const addDropdownOption = async (req: Request, res: Response) => {
   }
 };
 
+export const updateDropdownOptionStatus = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate input
+    if (!id || !["active", "inactive"].includes(status)) {
+      return res.status(400).json({
+        status: false,
+        message:
+          "Valid option ID and status ('active' or 'inactive') are required.",
+      });
+    }
+
+    // Check if option exists
+    const [existing] = await db
+      .select()
+      .from(dropdownOptions)
+      .where(eq(dropdownOptions.id, Number(id)));
+
+    if (!existing) {
+      return res.status(404).json({
+        status: false,
+        message: "Dropdown option not found.",
+      });
+    }
+
+    // Update status
+    await db
+      .update(dropdownOptions)
+      .set({ status })
+      .where(eq(dropdownOptions.id, Number(id)));
+
+    return res.status(200).json({
+      status: true,
+      message: "Option status updated successfully.",
+      data: {
+        id: existing.id,
+        previousStatus: existing.status,
+        newStatus: status,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating dropdown option status:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
 export const getDropdownsList = async (req: Request, res: Response) => {
   try {
     const { id, page = 1, pageSize = 10 } = req.query;

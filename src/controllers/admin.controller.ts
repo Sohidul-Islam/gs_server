@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
   findAdminByUsernameOrEmail,
@@ -9,10 +8,12 @@ import {
   updateAdmin,
   deleteAdmin as deleteAdminModel,
   AdminRole,
+  getDropdownById,
+  getPaginatedDropdowns,
 } from "../models/admin.model";
 import { db } from "../db/connection";
-import { adminUsers } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
@@ -540,5 +541,126 @@ export const deleteAdmin = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: false, message: "Failed to delete admin", error });
+  }
+};
+// ----------------------------
+// Configuration-------------------
+// ---------------------
+export const addDropdownOption = async (req: Request, res: Response) => {
+  try {
+    const { dropdownId, title, status } = req.body;
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    if (!dropdownId || !title) {
+      return res.status(400).json({
+        status: false,
+        message: "Dropdown name and options title are required.",
+      });
+    }
+
+    // Lookup dropdown
+    const [dropdown] = await db
+      .select()
+      .from(dropdowns)
+      .where(eq(dropdowns.dropdown_id, dropdownId));
+    if (!dropdown) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Dropdown not found." });
+    }
+
+    // Case-insensitive duplicate check
+    const [existingOption] = await db
+      .select()
+      .from(dropdownOptions)
+      .where(
+        and(
+          eq(dropdownOptions.dropdown_id, dropdownId),
+          sql`LOWER(${dropdownOptions.title}) = ${title.toLowerCase()}`
+        )
+      );
+
+    if (existingOption) {
+      return res.status(409).json({
+        status: false,
+        message: "This option title already exists for the dropdown.",
+      });
+    }
+
+    // Insert one option
+    await db.insert(dropdownOptions).values({
+      title,
+      dropdown_id: dropdownId,
+      status: status || "inactive",
+      created_by: userData?.username ?? "N/A",
+    });
+
+    // Fetch all options under the dropdown
+    const allOptions = await db
+      .select()
+      .from(dropdownOptions)
+      .where(eq(dropdownOptions.dropdown_id, dropdownId));
+
+    // Build response
+    const response = {
+      dropdown_id: dropdown.dropdown_id,
+      name: dropdown.name,
+      created_at: dropdown.created_at,
+      options: allOptions.map((opt) => ({
+        id: opt.id,
+        title: opt.title,
+        status: opt.status,
+        created_at: opt.created_at,
+        created_by: opt.created_by,
+      })),
+    };
+
+    return res.status(201).json({
+      status: true,
+      message: "Dropdown option added successfully.",
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error adding dropdown option:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+
+export const getDropdownsList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const dropdownId = id ? Number(id) : undefined;
+
+    if (dropdownId) {
+      const dropdown = await getDropdownById(dropdownId);
+      if (!dropdown) {
+        return res.status(404).json({
+          status: false,
+          message: "Dropdown not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Dropdown fetched successfully.",
+        data: dropdown,
+      });
+    }
+
+    const result = await getPaginatedDropdowns(Number(page), Number(pageSize));
+
+    return res.status(200).json({
+      status: true,
+      message: "Dropdowns fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching dropdowns:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
   }
 };

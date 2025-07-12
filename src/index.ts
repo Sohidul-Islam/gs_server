@@ -13,6 +13,7 @@ import userRouter from "./routes/user.route";
 import adminRouter from "./routes/admin.route";
 import countryRouter from "./routes/country.route";
 import { errorHandler } from "./middlewares/errorHandler";
+import { setupSwagger } from "./utils/swagger";
 // Ensure process.env.DATABASE_URL is defined and of correct type
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set.");
@@ -73,8 +74,10 @@ app.get("/", (req, res) => {
 
 // Global error handler
 app.use(errorHandler);
+setupSwagger(app);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log("Swagger docs: http://localhost:5000/api-docs");
 });

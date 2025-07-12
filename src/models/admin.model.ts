@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, or, and, like, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { adminUsers } from "../db/schema";
+import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
 import { db } from "../db/connection";
 
 export const findAdminByUsernameOrEmail = async (usernameOrEmail: string) => {
@@ -163,4 +163,78 @@ export const updateAdmin = async (
 export const deleteAdmin = async (id: number) => {
   const result = await db.delete(adminUsers).where(eq(adminUsers.id, id));
   return result;
+};
+
+export const getDropdownById = async (id: number) => {
+  const [dropdown] = await db
+    .select()
+    .from(dropdowns)
+    .where(eq(dropdowns.dropdown_id, id));
+  if (!dropdown) return null;
+
+  const options = await db
+    .select()
+    .from(dropdownOptions)
+    .where(eq(dropdownOptions.dropdown_id, id));
+
+  return {
+    ...dropdown,
+    options: options.length
+      ? options.map((opt) => ({
+          id: opt.id,
+          title: opt.title,
+          status: opt.status,
+          created_at: opt.created_at,
+          created_by: opt.created_by,
+        }))
+      : undefined,
+  };
+};
+
+export const getPaginatedDropdowns = async (page: number, pageSize: number) => {
+  const offset = (page - 1) * pageSize;
+
+  const dropdownsList = await db
+    .select()
+    .from(dropdowns)
+    .limit(pageSize)
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(dropdowns);
+
+  const total = Number(countResult[0].count);
+
+  const dataWithOptions = await Promise.all(
+    dropdownsList.map(async (dropdown: any) => {
+      const options = await db
+        .select()
+        .from(dropdownOptions)
+        .where(eq(dropdownOptions.dropdown_id, dropdown.dropdown_id));
+
+      return {
+        ...dropdown,
+        options: options.length
+          ? options.map((opt) => ({
+              id: opt.id,
+              title: opt.title,
+              status: opt.status,
+              created_at: opt.created_at,
+              created_by: opt.created_by,
+            }))
+          : undefined,
+      };
+    })
+  );
+
+  return {
+    data: dataWithOptions,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
 };

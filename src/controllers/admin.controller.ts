@@ -583,7 +583,7 @@ export const addDropdownOption = async (req: Request, res: Response) => {
     if (existingOption) {
       return res.status(409).json({
         status: false,
-        message: "This option title already exists for the dropdown.",
+        message: "This option title already exist.",
       });
     }
 
@@ -617,7 +617,7 @@ export const addDropdownOption = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       status: true,
-      message: "Dropdown option added successfully.",
+      message: "New option added successfully.",
       data: response,
     });
   } catch (error) {

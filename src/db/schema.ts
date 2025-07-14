@@ -5,3 +5,4 @@ export * from "./schema/country_languages";
 export * from "./schema/users";
 export * from "./schema/AdminUsers";
 export * from "./schema/dropdowns";
+export * from "./schema/promotions";

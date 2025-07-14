@@ -10,6 +10,7 @@ import {
   AdminRole,
   getDropdownById,
   getPaginatedDropdowns,
+  createPromotion,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
@@ -18,6 +19,7 @@ import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
 import { DecodedUser } from "../middlewares/verifyToken";
+import { createPromotionRequiredFields } from "../utils/requiredFields";
 
 export function getClientIp(req: Request): string {
   const ipSource = {
@@ -716,5 +718,74 @@ export const getDropdownsList = async (req: Request, res: Response) => {
       status: false,
       message: "Server error.",
     });
+  }
+};
+
+// ----------------------------
+// Promotions-------------------
+// ---------------------
+export const addPromotion = async (req: Request, res: Response) => {
+  try {
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    // Validation
+    for (const [field, errorMessage] of Object.entries(
+      createPromotionRequiredFields
+    )) {
+      if (!req.body?.[field]) {
+        return res.status(400).json({ status: false, message: errorMessage });
+      }
+    }
+
+    const {
+      promotionName,
+      promotionTypeId,
+      status = "inactive",
+      dateRange,
+      minimumDepositAmount,
+      maximumDepositAmount,
+      turnoverMultiply,
+      bannerImg,
+      bonus,
+      description,
+    } = req.body;
+
+    await createPromotion({
+      promotionName,
+      promotionTypeId,
+      status,
+      dateRange,
+      minimumDepositAmount: parseFloat(minimumDepositAmount),
+      maximumDepositAmount: parseFloat(maximumDepositAmount),
+      turnoverMultiply: parseInt(turnoverMultiply),
+      bannerImg,
+      bonus: parseInt(bonus),
+      description,
+      createdBy: userData?.username ?? "N/A",
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: "Promotion created successfully.",
+    });
+  } catch (error: any) {
+    console.error("Error in addPromotion:", error);
+
+    if (error.message === "DUPLICATE_PROMOTION") {
+      return res
+        .status(409)
+        .json({ status: false, message: "Promotion name already exists." });
+    }
+
+    if (error.message === "INVALID_PROMOTION_TYPE") {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid or inactive promotion type.",
+      });
+    }
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal server error." });
   }
 };

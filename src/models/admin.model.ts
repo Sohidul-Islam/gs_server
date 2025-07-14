@@ -2,8 +2,14 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, or, and, like, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
+import {
+  adminUsers,
+  dropdownOptions,
+  dropdowns,
+  promotions,
+} from "../db/schema";
 import { db } from "../db/connection";
+import { PromotionDataType } from "../utils/types";
 
 export const findAdminByUsernameOrEmail = async (usernameOrEmail: string) => {
   const [admin] = await db
@@ -238,3 +244,37 @@ export const getPaginatedDropdowns = async (page: number, pageSize: number) => {
     },
   };
 };
+
+export async function createPromotion(promotionData: PromotionDataType) {
+  const [existing] = await db
+    .select()
+    .from(promotions)
+    .where(eq(promotions.promotionName, promotionData.promotionName));
+
+  if (existing) {
+    throw new Error("DUPLICATE_PROMOTION");
+  }
+
+  const [typeOption] = await db
+    .select()
+    .from(dropdownOptions)
+    .where(
+      and(
+        eq(dropdownOptions.id, promotionData.promotionTypeId),
+        eq(dropdownOptions.status, "active")
+      )
+    );
+
+  if (!typeOption) {
+    throw new Error("INVALID_PROMOTION_TYPE");
+  }
+
+  await db.insert(promotions).values({
+    ...promotionData,
+    status: promotionData.status || "inactive",
+    minimumDepositAmount: promotionData.minimumDepositAmount.toFixed(2),
+    maximumDepositAmount: promotionData.maximumDepositAmount.toFixed(2),
+  });
+
+  return true;
+}

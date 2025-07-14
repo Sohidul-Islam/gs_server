@@ -10,6 +10,7 @@ import {
 } from "../db/schema";
 import { db } from "../db/connection";
 import { PromotionDataType } from "../utils/types";
+import { promotionSelectFields } from "../selected_field/promotionSelectFields";
 
 export const findAdminByUsernameOrEmail = async (usernameOrEmail: string) => {
   const [admin] = await db
@@ -229,7 +230,7 @@ export const getPaginatedDropdowns = async (page: number, pageSize: number) => {
               created_at: opt.created_at,
               created_by: opt.created_by,
             }))
-          : undefined,
+          : [],
       };
     })
   );
@@ -240,6 +241,46 @@ export const getPaginatedDropdowns = async (page: number, pageSize: number) => {
       page,
       pageSize,
       total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+};
+// Get single dropdown option details
+export const getSingleDropdownOptionById = async (id: number) => {
+  const [option] = await db
+    .select()
+    .from(dropdownOptions)
+    .where(
+      and(eq(dropdownOptions.id, id), eq(dropdownOptions.status, "active"))
+    );
+  return option || null;
+};
+
+// Get paginated dropdown options
+export const getPaginatedDropdownOptions = async (
+  page: number,
+  pageSize: number
+) => {
+  const offset = (page - 1) * pageSize;
+
+  const [countResult] = await db
+    .select({ count: sql<number>`COUNT(*)`.as("count") })
+    .from(dropdownOptions);
+
+  const total = countResult?.count ?? 0;
+
+  const options = await db
+    .select()
+    .from(dropdownOptions)
+    .limit(pageSize)
+    .offset(offset);
+
+  return {
+    data: options,
+    pagination: {
+      total,
+      page,
+      pageSize,
       totalPages: Math.ceil(total / pageSize),
     },
   };
@@ -279,13 +320,38 @@ export async function createPromotion(promotionData: PromotionDataType) {
   return true;
 }
 export const getPromotionById = async (id: number) => {
-  const [promotion] = await db
-    .select()
+  const [row] = await db
+    .select(promotionSelectFields)
     .from(promotions)
+    .leftJoin(
+      dropdownOptions,
+      eq(promotions.promotionTypeId, dropdownOptions.id)
+    )
     .where(eq(promotions.id, id));
-  if (!promotion) return null;
 
-  return promotion;
+  if (!row) return null;
+
+  const {
+    promotionTypeId,
+    promotionTypeTitle,
+    promotionTypeDropdownId,
+    promotionTypeStatus,
+    promotionTypeCreatedBy,
+    promotionTypeCreatedAt,
+    ...promotion
+  } = row;
+
+  return {
+    ...promotion,
+    promotionType: {
+      id: promotionTypeId,
+      title: promotionTypeTitle,
+      dropdownId: promotionTypeDropdownId,
+      status: promotionTypeStatus,
+      createdBy: promotionTypeCreatedBy,
+      createdAt: promotionTypeCreatedAt,
+    },
+  };
 };
 
 export const getPaginatedPromotions = async (
@@ -294,9 +360,13 @@ export const getPaginatedPromotions = async (
 ) => {
   const offset = (page - 1) * pageSize;
 
-  const promotionList = await db
+  const rows = await db
     .select()
     .from(promotions)
+    .leftJoin(
+      dropdownOptions,
+      eq(promotions.promotionTypeId, dropdownOptions.id)
+    )
     .limit(pageSize)
     .offset(offset);
 
@@ -306,8 +376,26 @@ export const getPaginatedPromotions = async (
 
   const total = Number(countResult[0].count);
 
+  const data = rows.map((row) => {
+    const { promotions, dropdown_options } = row;
+
+    return {
+      ...promotions,
+      promotionType: dropdown_options
+        ? {
+            id: dropdown_options.id,
+            title: dropdown_options.title,
+            dropdownId: dropdown_options.dropdown_id,
+            status: dropdown_options.status,
+            createdBy: dropdown_options.created_by,
+            createdAt: dropdown_options.created_at,
+          }
+        : null,
+    };
+  });
+
   return {
-    data: promotionList,
+    data,
     pagination: {
       page,
       pageSize,

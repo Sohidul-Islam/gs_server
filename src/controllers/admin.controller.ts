@@ -13,6 +13,8 @@ import {
   createPromotion,
   getPromotionById,
   getPaginatedPromotions,
+  getPaginatedDropdownOptions,
+  getSingleDropdownOptionById,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
@@ -550,6 +552,44 @@ export const deleteAdmin = async (req: Request, res: Response) => {
 // ----------------------------
 // Configuration-------------------
 // ---------------------
+export const getDropdownsList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const dropdownId = id ? Number(id) : undefined;
+
+    if (dropdownId) {
+      const dropdown = await getDropdownById(dropdownId);
+      if (!dropdown) {
+        return res.status(404).json({
+          status: false,
+          message: "Dropdown not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Dropdown fetched successfully.",
+        data: dropdown,
+      });
+    }
+
+    const result = await getPaginatedDropdowns(Number(page), Number(pageSize));
+
+    return res.status(200).json({
+      status: true,
+      message: "Dropdowns fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching dropdowns:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
 export const addDropdownOption = async (req: Request, res: Response) => {
   try {
     const { dropdownId, title, status } = req.body;
@@ -683,39 +723,41 @@ export const updateDropdownOptionStatus = async (
     });
   }
 };
-
-export const getDropdownsList = async (req: Request, res: Response) => {
+export const getDropdownOptionsList = async (req: Request, res: Response) => {
   try {
     const { id, page = 1, pageSize = 10 } = req.query;
 
-    const dropdownId = id ? Number(id) : undefined;
+    const optionId = id ? Number(id) : undefined;
 
-    if (dropdownId) {
-      const dropdown = await getDropdownById(dropdownId);
-      if (!dropdown) {
+    if (optionId) {
+      const option = await getSingleDropdownOptionById(optionId);
+      if (!option) {
         return res.status(404).json({
           status: false,
-          message: "Dropdown not found.",
+          message: "Dropdown option not found or inactive.",
         });
       }
 
       return res.status(200).json({
         status: true,
-        message: "Dropdown fetched successfully.",
-        data: dropdown,
+        message: "Dropdown option fetched successfully.",
+        data: option,
       });
     }
 
-    const result = await getPaginatedDropdowns(Number(page), Number(pageSize));
+    const result = await getPaginatedDropdownOptions(
+      Number(page),
+      Number(pageSize)
+    );
 
     return res.status(200).json({
       status: true,
-      message: "Dropdowns fetched successfully.",
+      message: "Dropdown options fetched successfully.",
       data: result.data,
       pagination: result.pagination,
     });
   } catch (error) {
-    console.error("Error fetching dropdowns:", error);
+    console.error("Error fetching dropdown options:", error);
     return res.status(500).json({
       status: false,
       message: "Server error.",

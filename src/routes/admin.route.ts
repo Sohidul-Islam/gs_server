@@ -52,12 +52,16 @@
  *                   properties:
  *                     page:
  *                       type: integer
+ *                       example: 1
  *                     pageSize:
  *                       type: integer
- *                     total:
+ *                       example: 10
+ *                     totalItems:
  *                       type: integer
+ *                       example: 100
  *                     totalPages:
  *                       type: integer
+ *                       example: 10
  *       404:
  *         description: Promotion not found
  *         content:
@@ -73,6 +77,17 @@
  *                   example: Promotion not found.
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Server error.
  */
 
 /**
@@ -84,97 +99,98 @@
  *       properties:
  *         id:
  *           type: integer
+ *           example: 1
  *         promotionName:
  *           type: string
- *         promotionTypeId:
- *           type: integer
+ *           example: Summer Sale
+ *         promotionType:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 2
+ *             title:
+ *               type: string
+ *               example: Seasonal
+ *             dropdownId:
+ *               type: integer
+ *               example: 1
+ *             status:
+ *               type: string
+ *               example: active
+ *             createdBy:
+ *               type: string
+ *               example: admin
+ *             createdAt:
+ *               type: string
+ *               format: date-time
+ *               example: "2025-07-14T10:00:00Z"
  *         status:
  *           type: string
- *           enum: [active, inactive]
+ *           example: active
  *         dateRange:
  *           type: string
+ *           example: "2025-07-01 to 2025-07-31"
  *         minimumDepositAmount:
  *           type: number
  *           format: float
+ *           example: 100.00
  *         maximumDepositAmount:
  *           type: number
  *           format: float
+ *           example: 1000.00
  *         turnoverMultiply:
  *           type: integer
+ *           example: 3
  *         bannerImg:
  *           type: string
+ *           example: "https://example.com/banner.jpg"
  *         bonus:
  *           type: integer
+ *           example: 50
  *         description:
  *           type: string
+ *           example: "Bonus promotion for summer."
  *         createdBy:
  *           type: string
+ *           example: admin
  *         createdAt:
  *           type: string
  *           format: date-time
+ *           example: "2025-07-14T10:00:00Z"
  */
-
 /**
  * @swagger
- * /api/admin/crete-promotion:
- *   post:
- *     summary: Create a new promotion
- *     tags: [Promotions]
+ * /api/admin/dropdown-options:
+ *   get:
+ *     summary: Get a single dropdown option by ID or fetch a paginated list of dropdown options
+ *     tags: [Dropdowns]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - promotionName
- *               - promotionTypeId
- *               - dateRange
- *               - minimumDepositAmount
- *               - maximumDepositAmount
- *               - turnoverMultiply
- *               - bannerImg
- *               - bonus
- *               - description
- *             properties:
- *               promotionName:
- *                 type: string
- *                 example: "First Deposit Bonus"
- *               promotionTypeId:
- *                 type: integer
- *                 example: 2
- *               status:
- *                 type: string
- *                 enum: [active, inactive]
- *                 example: "active"
- *               dateRange:
- *                 type: string
- *                 example: "2025-07-15 to 2025-07-30"
- *               minimumDepositAmount:
- *                 type: number
- *                 format: float
- *                 example: 100.00
- *               maximumDepositAmount:
- *                 type: number
- *                 format: float
- *                 example: 1000.00
- *               turnoverMultiply:
- *                 type: integer
- *                 example: 5
- *               bannerImg:
- *                 type: string
- *                 example: "https://yourdomain.com/images/promo-banner.jpg"
- *               bonus:
- *                 type: integer
- *                 example: 50
- *               description:
- *                 type: string
- *                 example: "<p>Get a 50% bonus on your first deposit.</p>"
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: ID of the dropdown option to retrieve (must be active)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         required: false
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         required: false
+ *         description: Number of dropdown options per page
  *     responses:
- *       201:
- *         description: Promotion created successfully
+ *       200:
+ *         description: Successfully fetched dropdown option(s)
  *         content:
  *           application/json:
  *             schema:
@@ -185,13 +201,84 @@
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: Promotion created successfully.
- *       400:
- *         description: Bad Request (validation or invalid promotion type)
- *       409:
- *         description: Conflict (duplicate promotion name)
+ *                   example: Dropdown options fetched successfully.
+ *                 data:
+ *                   oneOf:
+ *                     - type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                           example: 1
+ *                         title:
+ *                           type: string
+ *                           example: "Welcome Bonus"
+ *                         dropdown_id:
+ *                           type: integer
+ *                           example: 2
+ *                         status:
+ *                           type: string
+ *                           example: "active"
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-14T12:34:56.000Z"
+ *                         created_by:
+ *                           type: string
+ *                           example: "admin"
+ *                     - type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           title:
+ *                             type: string
+ *                           dropdown_id:
+ *                             type: integer
+ *                           status:
+ *                             type: string
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                           created_by:
+ *                             type: string
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     pageSize:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       404:
+ *         description: Dropdown option not found or inactive
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Dropdown option not found or inactive.
  *       500:
- *         description: Internal Server Error
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Server error.
  */
 
 import { Router } from "express";
@@ -214,6 +301,7 @@ import {
   updateDropdownOptionStatus,
   addPromotion,
   getPromotionsList,
+  getDropdownOptionsList,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -233,11 +321,16 @@ router.get("/affiliates", verifyToken, asyncHandler(getAffiliates));
 
 // configuration
 router.post("/create-dropdowns", verifyToken, asyncHandler(addDropdownOption));
-router.get("/get-dropdowns", verifyToken, asyncHandler(getDropdownsList));
-router.patch(
+router.post(
   "/update-dropdown-option-status/:id",
   verifyToken,
   asyncHandler(updateDropdownOptionStatus)
+);
+router.get("/get-dropdowns", verifyToken, asyncHandler(getDropdownsList));
+router.get(
+  "/dropdown-options",
+  verifyToken,
+  asyncHandler(getDropdownOptionsList)
 );
 
 // promotions

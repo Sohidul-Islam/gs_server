@@ -278,3 +278,41 @@ export async function createPromotion(promotionData: PromotionDataType) {
 
   return true;
 }
+export const getPromotionById = async (id: number) => {
+  const [promotion] = await db
+    .select()
+    .from(promotions)
+    .where(eq(promotions.id, id));
+  if (!promotion) return null;
+
+  return promotion;
+};
+
+export const getPaginatedPromotions = async (
+  page: number,
+  pageSize: number
+) => {
+  const offset = (page - 1) * pageSize;
+
+  const promotionList = await db
+    .select()
+    .from(promotions)
+    .limit(pageSize)
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(promotions);
+
+  const total = Number(countResult[0].count);
+
+  return {
+    data: promotionList,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+};

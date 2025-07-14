@@ -11,6 +11,8 @@ import {
   getDropdownById,
   getPaginatedDropdowns,
   createPromotion,
+  getPromotionById,
+  getPaginatedPromotions,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
@@ -787,5 +789,44 @@ export const addPromotion = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ status: false, message: "Internal server error." });
+  }
+};
+
+export const getPromotionsList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const promotionId = id ? Number(id) : undefined;
+
+    if (promotionId) {
+      const promotion = await getPromotionById(promotionId);
+      if (!promotion) {
+        return res.status(404).json({
+          status: false,
+          message: "Promotion not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Promotion fetched successfully.",
+        data: promotion,
+      });
+    }
+
+    const result = await getPaginatedPromotions(Number(page), Number(pageSize));
+
+    return res.status(200).json({
+      status: true,
+      message: "Promotion fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching promotion:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
   }
 };

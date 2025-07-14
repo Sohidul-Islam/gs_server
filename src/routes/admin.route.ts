@@ -1,5 +1,121 @@
 /**
  * @swagger
+ * /api/admin/promotions:
+ *   get:
+ *     summary: Get promotions list or a single promotion by ID
+ *     tags: [Promotions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: ID of the promotion to retrieve
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         required: false
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         required: false
+ *         description: Number of promotions per page
+ *     responses:
+ *       200:
+ *         description: Successful fetch of promotion(s)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Promotion fetched successfully.
+ *                 data:
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/Promotion'
+ *                     - type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Promotion'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     pageSize:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       404:
+ *         description: Promotion not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Promotion not found.
+ *       500:
+ *         description: Server error
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Promotion:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         promotionName:
+ *           type: string
+ *         promotionTypeId:
+ *           type: integer
+ *         status:
+ *           type: string
+ *           enum: [active, inactive]
+ *         dateRange:
+ *           type: string
+ *         minimumDepositAmount:
+ *           type: number
+ *           format: float
+ *         maximumDepositAmount:
+ *           type: number
+ *           format: float
+ *         turnoverMultiply:
+ *           type: integer
+ *         bannerImg:
+ *           type: string
+ *         bonus:
+ *           type: integer
+ *         description:
+ *           type: string
+ *         createdBy:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
  * /api/admin/crete-promotion:
  *   post:
  *     summary: Create a new promotion
@@ -97,6 +213,7 @@ import {
   getDropdownsList,
   updateDropdownOptionStatus,
   addPromotion,
+  getPromotionsList,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -125,6 +242,7 @@ router.patch(
 
 // promotions
 router.post("/crete-promotion", verifyToken, asyncHandler(addPromotion));
+router.get("/promotions", verifyToken, asyncHandler(getPromotionsList));
 
 // Update admin by id
 router.post("/update/:id", verifyToken, asyncHandler(updateAdminProfile));

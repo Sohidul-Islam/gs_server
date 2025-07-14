@@ -334,7 +334,7 @@ router.get(
 );
 
 // promotions
-router.post("/crete-promotion", verifyToken, asyncHandler(addPromotion));
+router.post("/create-promotion", verifyToken, asyncHandler(addPromotion));
 router.get("/promotions", verifyToken, asyncHandler(getPromotionsList));
 
 // Update admin by id

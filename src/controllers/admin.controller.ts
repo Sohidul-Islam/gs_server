@@ -770,6 +770,7 @@ export const getDropdownOptionsList = async (req: Request, res: Response) => {
 // ---------------------
 export const addPromotion = async (req: Request, res: Response) => {
   try {
+    console.log(req.body);
     const userData = (req as unknown as { user: DecodedUser | null })?.user;
 
     // Validation
@@ -794,6 +795,11 @@ export const addPromotion = async (req: Request, res: Response) => {
       description,
     } = req.body;
 
+    const bannerImgString =
+      typeof bannerImg === "string"
+        ? bannerImg
+        : bannerImg?.url || bannerImg?.path || "";
+
     await createPromotion({
       promotionName,
       promotionTypeId,
@@ -802,7 +808,7 @@ export const addPromotion = async (req: Request, res: Response) => {
       minimumDepositAmount: parseFloat(minimumDepositAmount),
       maximumDepositAmount: parseFloat(maximumDepositAmount),
       turnoverMultiply: parseInt(turnoverMultiply),
-      bannerImg,
+      bannerImg: bannerImgString,
       bonus: parseInt(bonus),
       description,
       createdBy: userData?.username ?? "N/A",

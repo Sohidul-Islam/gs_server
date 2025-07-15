@@ -6,22 +6,37 @@ import {
   languages,
   countryLanguages,
 } from "../models/country.model";
-import { eq, and, sql, not } from "drizzle-orm";
+import { eq, and, sql, not, like } from "drizzle-orm";
 import { getAllCurrencies, getAllLanguages } from "../models/country.model";
 
 export const getAllCountries = async (req: Request, res: Response) => {
   try {
     const status = req.query.status as "active" | "inactive" | undefined;
+    const searchKey = req?.query?.searchKey as string;
+
+    const whereCondition = [];
+
     // Only allow valid status values
     const validStatus =
       status === "active" || status === "inactive" ? status : undefined;
+
+    if (validStatus) {
+      whereCondition.push(eq(countries.status, validStatus));
+    }
+
+    if (searchKey) {
+      whereCondition.push(like(countries.name, `%${searchKey}%`));
+    }
+
     // Fetch all countries with optional status filter
-    const countryRows = validStatus
-      ? await db
-          .select()
-          .from(countries)
-          .where(eq(countries.status, validStatus))
-      : await db.select().from(countries);
+    const countryRows =
+      whereCondition?.length > 0
+        ? await db
+            .select()
+            .from(countries)
+            .where(and(...whereCondition))
+        : await db.select().from(countries);
+
     const result = await Promise.all(
       countryRows.map(async (country) => {
         let currency = null;
@@ -33,31 +48,34 @@ export const getAllCountries = async (req: Request, res: Response) => {
           currency = currencyResult[0] || null;
         }
 
-        const langLinks = await db
-          .select()
-          .from(countryLanguages)
-          .where(eq(countryLanguages.countryId, country.id));
+        console.log({ currency });
 
-        const langs = await Promise.all(
-          langLinks.map(async (cl) => {
-            const lang = await db
-              .select()
-              .from(languages)
-              .where(eq(languages.id, cl.languageId));
-            return lang[0];
-          })
-        );
+        // const langLinks = await db
+        //   .select()
+        //   .from(countryLanguages)
+        //   .where(eq(countryLanguages.countryId, country.id));
+
+        // const langs = await Promise.all(
+        //   langLinks.map(async (cl) => {
+        //     const lang = await db
+        //       .select()
+        //       .from(languages)
+        //       .where(eq(languages.id, cl.languageId));
+        //     return lang[0];
+        //   })
+        // );
 
         return {
           ...country,
-          currency,
-          languages: langs,
+          // currency,
+          // languages: langs,
         };
       })
     );
-    res.json(result);
+
+    res.json(countryRows);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch countries" });
+    res.status(500).json({ error: "Failed to fetch countries", errors: err });
   }
 };
 

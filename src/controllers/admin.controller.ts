@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
   findAdminByUsernameOrEmail,
@@ -9,14 +8,22 @@ import {
   updateAdmin,
   deleteAdmin as deleteAdminModel,
   AdminRole,
+  getDropdownById,
+  getPaginatedDropdowns,
+  createPromotion,
+  getPromotionById,
+  getPaginatedPromotions,
+  getPaginatedDropdownOptions,
+  getSingleDropdownOptionById,
 } from "../models/admin.model";
 import { db } from "../db/connection";
-import { adminUsers } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
 import { DecodedUser } from "../middlewares/verifyToken";
+import { createPromotionRequiredFields } from "../utils/requiredFields";
 
 export function getClientIp(req: Request): string {
   const ipSource = {
@@ -540,5 +547,345 @@ export const deleteAdmin = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: false, message: "Failed to delete admin", error });
+  }
+};
+// ----------------------------
+// Configuration-------------------
+// ---------------------
+export const getDropdownsList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const dropdownId = id ? Number(id) : undefined;
+
+    if (dropdownId) {
+      const dropdown = await getDropdownById(dropdownId);
+      if (!dropdown) {
+        return res.status(404).json({
+          status: false,
+          message: "Dropdown not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Dropdown fetched successfully.",
+        data: dropdown,
+      });
+    }
+
+    const result = await getPaginatedDropdowns(Number(page), Number(pageSize));
+
+    return res.status(200).json({
+      status: true,
+      message: "Dropdowns fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching dropdowns:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const addDropdownOption = async (req: Request, res: Response) => {
+  try {
+    const { dropdownId, title, status } = req.body;
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    if (!dropdownId || !title) {
+      return res.status(400).json({
+        status: false,
+        message: "Dropdown name and options title are required.",
+      });
+    }
+
+    // Lookup dropdown
+    const [dropdown] = await db
+      .select()
+      .from(dropdowns)
+      .where(eq(dropdowns.dropdown_id, dropdownId));
+    if (!dropdown) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Dropdown not found." });
+    }
+
+    // Case-insensitive duplicate check
+    const [existingOption] = await db
+      .select()
+      .from(dropdownOptions)
+      .where(
+        and(
+          eq(dropdownOptions.dropdown_id, dropdownId),
+          sql`LOWER(${dropdownOptions.title}) = ${title.toLowerCase()}`
+        )
+      );
+
+    if (existingOption) {
+      return res.status(409).json({
+        status: false,
+        message: "This option title already exist.",
+      });
+    }
+
+    // Insert one option
+    await db.insert(dropdownOptions).values({
+      title,
+      dropdown_id: dropdownId,
+      status: status || "inactive",
+      created_by: userData?.username ?? "N/A",
+    });
+
+    // Fetch all options under the dropdown
+    const allOptions = await db
+      .select()
+      .from(dropdownOptions)
+      .where(eq(dropdownOptions.dropdown_id, dropdownId));
+
+    // Build response
+    const response = {
+      dropdown_id: dropdown.dropdown_id,
+      name: dropdown.name,
+      created_at: dropdown.created_at,
+      options: allOptions.map((opt) => ({
+        id: opt.id,
+        title: opt.title,
+        status: opt.status,
+        created_at: opt.created_at,
+        created_by: opt.created_by,
+      })),
+    };
+
+    return res.status(201).json({
+      status: true,
+      message: "New option added successfully.",
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error adding dropdown option:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+
+export const updateDropdownOptionStatus = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate input
+    if (!id || !["active", "inactive"].includes(status)) {
+      return res.status(400).json({
+        status: false,
+        message:
+          "Valid option ID and status ('active' or 'inactive') are required.",
+      });
+    }
+
+    // Check if option exists
+    const [existing] = await db
+      .select()
+      .from(dropdownOptions)
+      .where(eq(dropdownOptions.id, Number(id)));
+
+    if (!existing) {
+      return res.status(404).json({
+        status: false,
+        message: "Dropdown option not found.",
+      });
+    }
+
+    // Update status
+    await db
+      .update(dropdownOptions)
+      .set({ status })
+      .where(eq(dropdownOptions.id, Number(id)));
+
+    return res.status(200).json({
+      status: true,
+      message: "Option status updated successfully.",
+      data: {
+        id: existing.id,
+        previousStatus: existing.status,
+        newStatus: status,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating dropdown option status:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const getDropdownOptionsList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const optionId = id ? Number(id) : undefined;
+
+    if (optionId) {
+      const option = await getSingleDropdownOptionById(optionId);
+      if (!option) {
+        return res.status(404).json({
+          status: false,
+          message: "Dropdown option not found or inactive.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Dropdown option fetched successfully.",
+        data: option,
+      });
+    }
+
+    const result = await getPaginatedDropdownOptions(
+      Number(page),
+      Number(pageSize)
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "Dropdown options fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching dropdown options:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+// ----------------------------
+// Promotions-------------------
+// ---------------------
+export const addPromotion = async (req: Request, res: Response) => {
+  try {
+    console.log(req.body);
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    // Validation
+    for (const [field, errorMessage] of Object.entries(
+      createPromotionRequiredFields
+    )) {
+      if (!req.body?.[field]) {
+        return res.status(400).json({ status: false, message: errorMessage });
+      }
+    }
+
+    const {
+      promotionName,
+      promotionTypeId,
+      status = "inactive",
+      dateRange,
+      minimumDepositAmount,
+      maximumDepositAmount,
+      turnoverMultiply,
+      bannerImg,
+      bonus,
+      description,
+    } = req.body;
+
+    // Handle both single and multiple image objects
+    let bannerImgValue: any = "";
+
+    if (Array.isArray(bannerImg)) {
+      // Validate array content (optional: check for required keys inside)
+      bannerImgValue = bannerImg;
+    } else if (
+      typeof bannerImg === "object" &&
+      bannerImg !== null &&
+      bannerImg.original
+    ) {
+      bannerImgValue = bannerImg;
+    } else if (typeof bannerImg === "string") {
+      bannerImgValue = bannerImg;
+    }
+
+    await createPromotion({
+      promotionName,
+      promotionTypeId,
+      status,
+      dateRange,
+      minimumDepositAmount: parseFloat(minimumDepositAmount),
+      maximumDepositAmount: parseFloat(maximumDepositAmount),
+      turnoverMultiply: parseInt(turnoverMultiply),
+      bannerImg: bannerImgValue,
+      bonus: parseInt(bonus),
+      description,
+      createdBy: userData?.username ?? "N/A",
+    });
+
+    return res.status(201).json({
+      status: true,
+      message: "Promotion created successfully.",
+    });
+  } catch (error: any) {
+    console.error("Error in addPromotion:", error);
+
+    if (error.message === "DUPLICATE_PROMOTION") {
+      return res
+        .status(409)
+        .json({ status: false, message: "Promotion name already exists." });
+    }
+
+    if (error.message === "INVALID_PROMOTION_TYPE") {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid or inactive promotion type.",
+      });
+    }
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal server error." });
+  }
+};
+
+export const getPromotionsList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const promotionId = id ? Number(id) : undefined;
+
+    if (promotionId) {
+      const promotion = await getPromotionById(promotionId);
+      if (!promotion) {
+        return res.status(404).json({
+          status: false,
+          message: "Promotion not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Promotion fetched successfully.",
+        data: promotion,
+      });
+    }
+
+    const result = await getPaginatedPromotions(Number(page), Number(pageSize));
+
+    return res.status(200).json({
+      status: true,
+      message: "Promotion fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching promotion:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
   }
 };

@@ -1,5 +1,10 @@
 export type statusType = "active" | "inactive";
 
+export interface ImageObject {
+  original: string;
+  thumbnail: string;
+}
+
 // promotions
 export interface PromotionDataType {
   promotionName: string;
@@ -9,7 +14,7 @@ export interface PromotionDataType {
   minimumDepositAmount: number;
   maximumDepositAmount: number;
   turnoverMultiply: number;
-  bannerImg: string;
+  bannerImg: string | ImageObject | ImageObject[];
   bonus: number;
   description: string;
   createdBy: string;

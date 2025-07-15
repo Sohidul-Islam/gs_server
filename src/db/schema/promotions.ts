@@ -7,6 +7,7 @@ import {
   datetime,
   decimal,
   text,
+  json,
 } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 
@@ -25,7 +26,7 @@ export const promotions = mysqlTable("promotions", {
     scale: 2,
   }).notNull(),
   turnoverMultiply: int("turnover_multiply").notNull(),
-  bannerImg: varchar("banner_img", { length: 255 }).notNull(),
+  bannerImg: json("banner_img").notNull(),
   bonus: int("bonus").notNull(),
   description: text("description").notNull(),
   createdBy: varchar("created_by", { length: 200 }).notNull(),

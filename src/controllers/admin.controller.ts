@@ -795,10 +795,21 @@ export const addPromotion = async (req: Request, res: Response) => {
       description,
     } = req.body;
 
-    const bannerImgString =
-      typeof bannerImg === "string"
-        ? bannerImg
-        : bannerImg?.url || bannerImg?.path || "";
+    // Handle both single and multiple image objects
+    let bannerImgValue: any = "";
+
+    if (Array.isArray(bannerImg)) {
+      // Validate array content (optional: check for required keys inside)
+      bannerImgValue = bannerImg;
+    } else if (
+      typeof bannerImg === "object" &&
+      bannerImg !== null &&
+      bannerImg.original
+    ) {
+      bannerImgValue = bannerImg;
+    } else if (typeof bannerImg === "string") {
+      bannerImgValue = bannerImg;
+    }
 
     await createPromotion({
       promotionName,
@@ -808,7 +819,7 @@ export const addPromotion = async (req: Request, res: Response) => {
       minimumDepositAmount: parseFloat(minimumDepositAmount),
       maximumDepositAmount: parseFloat(maximumDepositAmount),
       turnoverMultiply: parseInt(turnoverMultiply),
-      bannerImg: bannerImgString,
+      bannerImg: bannerImgValue,
       bonus: parseInt(bonus),
       description,
       createdBy: userData?.username ?? "N/A",

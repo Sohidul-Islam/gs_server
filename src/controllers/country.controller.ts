@@ -48,32 +48,30 @@ export const getAllCountries = async (req: Request, res: Response) => {
           currency = currencyResult[0] || null;
         }
 
-        console.log({ currency });
+        const langLinks = await db
+          .select()
+          .from(countryLanguages)
+          .where(eq(countryLanguages.countryId, country.id));
 
-        // const langLinks = await db
-        //   .select()
-        //   .from(countryLanguages)
-        //   .where(eq(countryLanguages.countryId, country.id));
-
-        // const langs = await Promise.all(
-        //   langLinks.map(async (cl) => {
-        //     const lang = await db
-        //       .select()
-        //       .from(languages)
-        //       .where(eq(languages.id, cl.languageId));
-        //     return lang[0];
-        //   })
-        // );
+        const langs = await Promise.all(
+          langLinks.map(async (cl) => {
+            const lang = await db
+              .select()
+              .from(languages)
+              .where(eq(languages.id, cl.languageId));
+            return lang[0];
+          })
+        );
 
         return {
           ...country,
-          // currency,
-          // languages: langs,
+          currency,
+          languages: langs,
         };
       })
     );
 
-    res.json(countryRows);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch countries", errors: err });
   }

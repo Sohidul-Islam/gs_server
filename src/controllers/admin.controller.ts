@@ -15,6 +15,7 @@ import {
   getPaginatedPromotions,
   getPaginatedDropdownOptions,
   getSingleDropdownOptionById,
+  updatePromotion,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
@@ -24,6 +25,7 @@ import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
 import { DecodedUser } from "../middlewares/verifyToken";
 import { createPromotionRequiredFields } from "../utils/requiredFields";
+import { PromotionDataType } from "../utils/types";
 
 export function getClientIp(req: Request): string {
   const ipSource = {
@@ -768,7 +770,7 @@ export const getDropdownOptionsList = async (req: Request, res: Response) => {
 // ----------------------------
 // Promotions-------------------
 // ---------------------
-export const addPromotion = async (req: Request, res: Response) => {
+export const addOrUpdatePromotion = async (req: Request, res: Response) => {
   try {
     console.log(req.body);
     const userData = (req as unknown as { user: DecodedUser | null })?.user;
@@ -783,6 +785,7 @@ export const addPromotion = async (req: Request, res: Response) => {
     }
 
     const {
+      id, // <-- NEW: Check this
       promotionName,
       promotionTypeId,
       status = "inactive",
@@ -795,11 +798,9 @@ export const addPromotion = async (req: Request, res: Response) => {
       description,
     } = req.body;
 
-    // Handle both single and multiple image objects
+    // Normalize bannerImg
     let bannerImgValue: any = "";
-
     if (Array.isArray(bannerImg)) {
-      // Validate array content (optional: check for required keys inside)
       bannerImgValue = bannerImg;
     } else if (
       typeof bannerImg === "object" &&
@@ -808,10 +809,14 @@ export const addPromotion = async (req: Request, res: Response) => {
     ) {
       bannerImgValue = bannerImg;
     } else if (typeof bannerImg === "string") {
-      bannerImgValue = bannerImg;
+      try {
+        bannerImgValue = JSON.parse(bannerImg);
+      } catch (error) {
+        bannerImgValue = bannerImg;
+      }
     }
 
-    await createPromotion({
+    const promotionPayload: PromotionDataType = {
       promotionName,
       promotionTypeId,
       status,
@@ -823,14 +828,24 @@ export const addPromotion = async (req: Request, res: Response) => {
       bonus: parseInt(bonus),
       description,
       createdBy: userData?.username ?? "N/A",
-    });
+    };
 
-    return res.status(201).json({
-      status: true,
-      message: "Promotion created successfully.",
-    });
+    if (id) {
+      await updatePromotion(id, promotionPayload);
+      return res.status(200).json({
+        status: true,
+        message: "Promotion updated successfully.",
+        data: promotionPayload,
+      });
+    } else {
+      await createPromotion(promotionPayload);
+      return res.status(201).json({
+        status: true,
+        message: "Promotion created successfully.",
+      });
+    }
   } catch (error: any) {
-    console.error("Error in addPromotion:", error);
+    console.error("Error in addOrUpdatePromotion:", error);
 
     if (error.message === "DUPLICATE_PROMOTION") {
       return res

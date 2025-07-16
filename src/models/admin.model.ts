@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, or, and, like, inArray } from "drizzle-orm";
+import { eq, or, and, like, inArray, ne } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
   adminUsers,
@@ -319,6 +319,52 @@ export async function createPromotion(promotionData: PromotionDataType) {
 
   return true;
 }
+
+export async function updatePromotion(
+  id: number,
+  promotionData: PromotionDataType
+) {
+  const [existing] = await db
+    .select()
+    .from(promotions)
+    .where(
+      and(
+        eq(promotions.promotionName, promotionData.promotionName),
+        ne(promotions.id, id)
+      )
+    );
+
+  if (existing) {
+    throw new Error("DUPLICATE_PROMOTION");
+  }
+
+  const [typeOption] = await db
+    .select()
+    .from(dropdownOptions)
+    .where(
+      and(
+        eq(dropdownOptions.id, promotionData.promotionTypeId),
+        eq(dropdownOptions.status, "active")
+      )
+    );
+
+  if (!typeOption) {
+    throw new Error("INVALID_PROMOTION_TYPE");
+  }
+
+  await db
+    .update(promotions)
+    .set({
+      ...promotionData,
+      status: promotionData.status || "inactive",
+      minimumDepositAmount: promotionData.minimumDepositAmount.toFixed(2),
+      maximumDepositAmount: promotionData.maximumDepositAmount.toFixed(2),
+    })
+    .where(eq(promotions.id, id));
+
+  return true;
+}
+
 export const getPromotionById = async (id: number) => {
   const [row] = await db
     .select(promotionSelectFields)

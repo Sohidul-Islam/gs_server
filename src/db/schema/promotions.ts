@@ -18,11 +18,12 @@ export const promotions = mysqlTable("promotions", {
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
   dateRange: varchar("date_range", { length: 255 }).notNull(),
   minimumDepositAmount: decimal("minimum_deposit_amount", {
-    precision: 7,
+    precision: 20,
     scale: 2,
   }).notNull(),
+
   maximumDepositAmount: decimal("maximum_deposit_amount", {
-    precision: 7,
+    precision: 20,
     scale: 2,
   }).notNull(),
   turnoverMultiply: int("turnover_multiply").notNull(),

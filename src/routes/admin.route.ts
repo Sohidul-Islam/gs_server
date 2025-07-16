@@ -299,9 +299,9 @@ import {
   addDropdownOption,
   getDropdownsList,
   updateDropdownOptionStatus,
-  addPromotion,
   getPromotionsList,
   getDropdownOptionsList,
+  addOrUpdatePromotion,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -334,7 +334,7 @@ router.get(
 );
 
 // promotions
-router.post("/create-promotion", verifyToken, asyncHandler(addPromotion));
+router.post("/promotion", verifyToken, asyncHandler(addOrUpdatePromotion));
 router.get("/promotions", verifyToken, asyncHandler(getPromotionsList));
 
 // Update admin by id

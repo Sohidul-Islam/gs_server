@@ -13,6 +13,8 @@ export const getAllCountries = async (req: Request, res: Response) => {
   try {
     const status = req.query.status as "active" | "inactive" | undefined;
     const searchKey = req?.query?.searchKey as string;
+    const pageSize = parseInt((req.query.pageSize as string) || "10", 10);
+    const page = parseInt((req.query.page as string) || "1", 10);
 
     const whereCondition = [];
 
@@ -28,14 +30,29 @@ export const getAllCountries = async (req: Request, res: Response) => {
       whereCondition.push(like(countries.name, `%${searchKey}%`));
     }
 
-    // Fetch all countries with optional status filter
+    // Count total countries for pagination
+    const totalCountResult =
+      whereCondition?.length > 0
+        ? await db
+            .select({ count: sql`count(*)`.mapWith(Number) })
+            .from(countries)
+            .where(and(...whereCondition))
+        : await db
+            .select({ count: sql`count(*)`.mapWith(Number) })
+            .from(countries);
+    const totalCount = totalCountResult[0]?.count || 0;
+
+    // Fetch paginated countries with optional status filter
+    const offset = (page - 1) * pageSize;
     const countryRows =
       whereCondition?.length > 0
         ? await db
             .select()
             .from(countries)
             .where(and(...whereCondition))
-        : await db.select().from(countries);
+            .limit(pageSize)
+            .offset(offset)
+        : await db.select().from(countries).limit(pageSize).offset(offset);
 
     const result = await Promise.all(
       countryRows.map(async (country) => {
@@ -71,7 +88,15 @@ export const getAllCountries = async (req: Request, res: Response) => {
       })
     );
 
-    res.json(result);
+    res.json({
+      data: result,
+      pagination: {
+        total: totalCount,
+        page,
+        pageSize,
+        totalPages: Math.ceil(totalCount / pageSize),
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch countries", errors: err });
   }

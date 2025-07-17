@@ -12,6 +12,7 @@ import { Request, Response, NextFunction } from "express";
 import userRouter from "./routes/user.route";
 import adminRouter from "./routes/admin.route";
 import countryRouter from "./routes/country.route";
+import accountRoutes from "./routes/account.route";
 import { errorHandler } from "./middlewares/errorHandler";
 import { setupSwagger } from "./utils/swagger";
 // Ensure process.env.DATABASE_URL is defined and of correct type
@@ -67,6 +68,7 @@ app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 
 app.use("/api/countries", countryRouter);
+app.use("/api/accounts", accountRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Fashion Glory API!");

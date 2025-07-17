@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/mysql-core";
 
 export const dropdowns = mysqlTable("dropdowns", {
-  dropdown_id: serial("dropdown_id").primaryKey().autoincrement(),
+  id: serial("dropdown_id").primaryKey().autoincrement(),
   name: varchar("name", { length: 200 }).notNull(), // Example: "Promotion Type"
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
@@ -28,7 +28,7 @@ export const dropdownOptionsRelations = relations(
   ({ one }) => ({
     dropdown: one(dropdowns, {
       fields: [dropdownOptions.dropdown_id],
-      references: [dropdowns.dropdown_id],
+      references: [dropdowns.id],
     }),
   })
 );

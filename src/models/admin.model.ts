@@ -43,10 +43,12 @@ export const createAdmin = async (data: {
   createdBy?: number;
   status?: "active" | "inactive";
   refCode?: string;
+  referred_by?: number;
 }) => {
   const [admin] = await db.insert(adminUsers).values({
     ...data,
     createdBy: data?.createdBy,
+    referred_by: data?.referred_by,
   });
   return admin;
 };
@@ -479,6 +481,14 @@ export const getPaginatedAnnouncements = async (
       totalPages: Math.ceil(total / pageSize),
     },
   };
+};
+
+export const findAdminByRefCode = async (refCode: string) => {
+  const [admin] = await db
+    .select()
+    .from(adminUsers)
+    .where(eq(adminUsers.refCode, refCode));
+  return admin;
 };
 
 // shared delete logic

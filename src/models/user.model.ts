@@ -32,14 +32,24 @@ export const createUser = async (data: {
   refer_code?: string;
   isAgreeWithTerms: boolean;
   createdBy?: number;
+  referred_by?: number;
 }) => {
   // const hashedPassword = await bcrypt.hash(data.password, 10);
   const [user] = await db.insert(users).values({
     ...data,
     created_by: data?.createdBy,
+    referred_by: data?.referred_by,
     // password: hashedPassword,
   });
 
+  return user;
+};
+
+export const findUserByReferCode = async (refer_code: string) => {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.refer_code, refer_code));
   return user;
 };
 

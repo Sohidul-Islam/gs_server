@@ -18,6 +18,7 @@ import {
   updatePromotion,
   getPaginatedAnnouncements,
   deleteById,
+  findAdminByRefCode,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import {
@@ -35,6 +36,7 @@ import * as UAParser from "ua-parser-js";
 import { DecodedUser } from "../middlewares/verifyToken";
 import { createPromotionRequiredFields } from "../utils/requiredFields";
 import { PromotionDataType } from "../utils/types";
+import { generateUniqueRefCode } from "../utils/refCode";
 
 export function getClientIp(req: Request): string {
   const ipSource = {
@@ -100,6 +102,8 @@ export const adminRegistration = async (
       return;
     }
 
+    const createdByData = (req as any)?.user?.id ?? createdBy;
+
     if (
       userData?.role === "superAgent" &&
       ["admin", "superAgent", "superAffiliate", "affiliate"].includes(role)
@@ -155,6 +159,16 @@ export const adminRegistration = async (
         .json({ status: false, message: "Admin user already exists" });
       return;
     }
+    // Generate unique refCode for this admin
+    const uniqueRefCode = await generateUniqueRefCode("admin");
+    // If refCode is provided, find the referring admin
+    let referred_by = undefined;
+    if (refCode) {
+      const referringAdmin = await findAdminByRefCode(refCode);
+      if (referringAdmin && referringAdmin.id) {
+        referred_by = referringAdmin.id;
+      }
+    }
     // const hashedPassword = await bcrypt.hash(password, 10);
     const admin = await createAdmin({
       username,
@@ -169,9 +183,10 @@ export const adminRegistration = async (
       minTrx: minTrx !== undefined ? String(minTrx) : undefined,
       maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
       currency,
-      createdBy,
-      refCode,
+      createdBy: Number(createdByData),
+      refCode: uniqueRefCode,
       status,
+      referred_by,
     });
     res.status(201).json({
       status: true,
@@ -181,7 +196,7 @@ export const adminRegistration = async (
   } catch (error) {
     res
       .status(500)
-      .json({ status: false, message: "Failed to register admin" });
+      .json({ status: false, message: "Failed to register admin", error });
   }
 };
 

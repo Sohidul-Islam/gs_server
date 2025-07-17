@@ -608,7 +608,7 @@ export const addDropdownOption = async (req: Request, res: Response) => {
     const [dropdown] = await db
       .select()
       .from(dropdowns)
-      .where(eq(dropdowns.dropdown_id, dropdownId));
+      .where(eq(dropdowns.id, dropdownId));
     if (!dropdown) {
       return res
         .status(404)
@@ -649,7 +649,7 @@ export const addDropdownOption = async (req: Request, res: Response) => {
 
     // Build response
     const response = {
-      dropdown_id: dropdown.dropdown_id,
+      dropdown_id: dropdown.id,
       name: dropdown.name,
       created_at: dropdown.created_at,
       options: allOptions.map((opt) => ({

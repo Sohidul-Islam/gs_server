@@ -176,7 +176,7 @@ export const getDropdownById = async (id: number) => {
   const [dropdown] = await db
     .select()
     .from(dropdowns)
-    .where(eq(dropdowns.dropdown_id, id));
+    .where(eq(dropdowns.id, id));
   if (!dropdown) return null;
 
   const options = await db
@@ -218,7 +218,7 @@ export const getPaginatedDropdowns = async (page: number, pageSize: number) => {
       const options = await db
         .select()
         .from(dropdownOptions)
-        .where(eq(dropdownOptions.dropdown_id, dropdown.dropdown_id));
+        .where(eq(dropdownOptions.dropdown_id, dropdown.id));
 
       return {
         ...dropdown,

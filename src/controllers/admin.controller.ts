@@ -19,7 +19,7 @@ import {
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
@@ -816,6 +816,29 @@ export const addOrUpdatePromotion = async (req: Request, res: Response) => {
       }
     }
 
+    // Support array input for promotionTypeId
+    const promotionTypeIds: number[] = Array.isArray(promotionTypeId)
+      ? promotionTypeId
+      : [promotionTypeId];
+
+    // Validate all promotion type IDs
+    const validTypeOptions = await db
+      .select()
+      .from(dropdownOptions)
+      .where(
+        and(
+          inArray(dropdownOptions.id, promotionTypeIds),
+          eq(dropdownOptions.status, "active")
+        )
+      );
+
+    if (validTypeOptions.length !== promotionTypeIds.length) {
+      return res.status(400).json({
+        status: false,
+        message: "One or more promotion type IDs are invalid or inactive.",
+      });
+    }
+
     const promotionPayload: PromotionDataType = {
       promotionName,
       promotionTypeId,
@@ -824,7 +847,7 @@ export const addOrUpdatePromotion = async (req: Request, res: Response) => {
       minimumDepositAmount: parseFloat(minimumDepositAmount),
       maximumDepositAmount: parseFloat(maximumDepositAmount),
       turnoverMultiply: parseInt(turnoverMultiply),
-      bannerImg: bannerImgValue,
+      bannerImg,
       bonus: parseInt(bonus),
       description,
       createdBy: userData?.username ?? "N/A",

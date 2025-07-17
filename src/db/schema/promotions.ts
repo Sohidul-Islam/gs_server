@@ -27,7 +27,7 @@ export const promotions = mysqlTable("promotions", {
     scale: 2,
   }).notNull(),
   turnoverMultiply: int("turnover_multiply").notNull(),
-  bannerImg: json("banner_img").notNull(),
+  bannerImg: text("banner_img").notNull(),
   bonus: int("bonus").notNull(),
   description: text("description").notNull(),
   createdBy: varchar("created_by", { length: 200 }).notNull(),

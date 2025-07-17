@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/mysql-core";
 
 export const dropdowns = mysqlTable("dropdowns", {
-  id: serial("dropdown_id").primaryKey().autoincrement(),
+  id: serial("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 200 }).notNull(), // Example: "Promotion Type"
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });

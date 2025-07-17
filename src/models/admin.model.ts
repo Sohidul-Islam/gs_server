@@ -309,7 +309,7 @@ export async function createPromotion(promotionData: PromotionDataType) {
   if (!typeOption) {
     throw new Error("INVALID_PROMOTION_TYPE");
   }
-
+  console.log("object", promotionData);
   await db.insert(promotions).values({
     ...promotionData,
     status: promotionData.status || "inactive",

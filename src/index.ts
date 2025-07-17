@@ -10,6 +10,7 @@ import { Request, Response, NextFunction } from "express";
 
 // Routes import
 import userRouter from "./routes/user.route";
+import publicRouter from "./routes/public.route";
 import adminRouter from "./routes/admin.route";
 import countryRouter from "./routes/country.route";
 import accountRoutes from "./routes/account.route";
@@ -58,6 +59,9 @@ app.use(cors());
 // );
 
 app.use(express.json());
+
+// Public routes
+app.use("/api/public", publicRouter);
 
 // User routes (to be implemented in controllers/routes)
 

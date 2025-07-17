@@ -1,11 +1,13 @@
 /**
  * @swagger
- * /api/admin/promotions:
+ * tags:
+ *   - name: Public Promotions
+ *     description: Public-facing promotion APIs
+ *
+ * /api/public/promotions:
  *   get:
- *     summary: Get promotions list or a single promotion by ID
- *     tags: [Promotions]
- *     security:
- *       - bearerAuth: []
+ *     summary: Get public promotions list or a single promotion by ID
+ *     tags: [Public Promotions]
  *     parameters:
  *       - in: query
  *         name: id
@@ -43,12 +45,13 @@
  *                   example: Promotion fetched successfully.
  *                 data:
  *                   oneOf:
- *                     - $ref: '#/db/schema/promotion'
+ *                     - $ref: '#/components/schemas/Promotion'
  *                     - type: array
  *                       items:
- *                         $ref: '#/db/schema/promotion'
+ *                         $ref: '#/components/schemas/Promotion'
  *                 pagination:
  *                   type: object
+ *                   nullable: true
  *                   properties:
  *                     page:
  *                       type: integer
@@ -56,7 +59,7 @@
  *                     pageSize:
  *                       type: integer
  *                       example: 10
- *                     totalItems:
+ *                     total:
  *                       type: integer
  *                       example: 100
  *                     totalPages:
@@ -88,68 +91,73 @@
  *                 message:
  *                   type: string
  *                   example: Server error.
+ *
+ * components:
+ *   schemas:
+ *     PromotionType:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 3
+ *         title:
+ *           type: string
+ *           example: "Welcome Bonus"
+ *         dropdownId:
+ *           type: integer
+ *           example: 1
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-07-16T12:00:00Z"
+ *
+ *     Promotion:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         promotionName:
+ *           type: string
+ *           example: "Super Saver Promo"
+ *         promotionTypeId:
+ *           type: integer
+ *           example: 3
+ *         dateRange:
+ *           type: string
+ *           example: "2025/07/16 00:00:00 ~ 2025/07/20 23:59:59"
+ *         minimumDepositAmount:
+ *           type: string
+ *           example: "100.00"
+ *         maximumDepositAmount:
+ *           type: string
+ *           example: "1000000.00"
+ *         turnoverMultiply:
+ *           type: integer
+ *           example: 10
+ *         bannerImg:
+ *           type: object
+ *           example: { url: "https://example.com/banner.jpg", alt: "Promo banner" }
+ *         bonus:
+ *           type: integer
+ *           example: 20
+ *         description:
+ *           type: string
+ *           example: "Get 20% extra on your first deposit."
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-07-16T12:00:00Z"
+ *         promotionType:
+ *           $ref: '#/components/schemas/PromotionType'
  */
 
 import { Router } from "express";
-import { verifyToken } from "../middlewares/verifyToken";
+import { getPublicPromotionList } from "../controllers/public.controller";
 import { asyncHandler } from "../utils/asyncHandler";
-
-import {
-  adminLogin,
-  adminRegistration,
-  adminProfile,
-  adminLogout,
-  getPlayers,
-  getAdmins,
-  updateAdminProfile,
-  deleteAdmin,
-  getAgents,
-  getAffiliates,
-  addDropdownOption,
-  getDropdownsList,
-  updateDropdownOptionStatus,
-  getPromotionsList,
-  getDropdownOptionsList,
-  addOrUpdatePromotion,
-} from "../controllers/admin.controller";
 
 const router = Router();
 
-// withtout verification token
-router.post("/login", asyncHandler(adminLogin));
-router.post("/registration", asyncHandler(adminRegistration));
-// with token
-router.post("/create-agent", verifyToken, asyncHandler(adminRegistration));
-router.post("/create-admin", verifyToken, asyncHandler(adminRegistration));
-router.post("/logout", verifyToken, asyncHandler(adminLogout));
-router.get("/profile", verifyToken, asyncHandler(adminProfile));
-router.get("/players", verifyToken, asyncHandler(getPlayers));
-router.get("/admins", verifyToken, asyncHandler(getAdmins));
-router.get("/agents", verifyToken, asyncHandler(getAgents));
-router.get("/affiliates", verifyToken, asyncHandler(getAffiliates));
-
-// configuration
-router.post("/create-dropdowns", verifyToken, asyncHandler(addDropdownOption));
-router.post(
-  "/update-dropdown-option-status/:id",
-  verifyToken,
-  asyncHandler(updateDropdownOptionStatus)
-);
-router.get("/get-dropdowns", verifyToken, asyncHandler(getDropdownsList));
-router.get(
-  "/dropdown-options",
-  verifyToken,
-  asyncHandler(getDropdownOptionsList)
-);
-
-// promotions
-router.post("/promotion", verifyToken, asyncHandler(addOrUpdatePromotion));
-router.get("/promotions", verifyToken, asyncHandler(getPromotionsList));
-
-// Update admin by id
-router.post("/update/:id", verifyToken, asyncHandler(updateAdminProfile));
-
-// Delete admin by id
-router.post("/delete/:id", verifyToken, asyncHandler(deleteAdmin));
+router.get("/promotions", asyncHandler(getPublicPromotionList));
 
 export default router;

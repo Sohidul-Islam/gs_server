@@ -14,7 +14,7 @@ export interface PromotionDataType {
   minimumDepositAmount: number;
   maximumDepositAmount: number;
   turnoverMultiply: number;
-  bannerImg: string | ImageObject | ImageObject[];
+  bannerImg: string;
   bonus: number;
   description: string;
   createdBy: string;

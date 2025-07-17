@@ -1,93 +1,43 @@
 /**
  * @swagger
- * /api/admin/promotions:
- *   get:
- *     summary: Get promotions list or a single promotion by ID
- *     tags: [Promotions]
+ * /api/admin/create-banner:
+ *   post:
+ *     summary: Create or update a banner
+ *     tags: [Banners]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: id
- *         schema:
- *           type: integer
- *         required: false
- *         description: ID of the promotion to retrieve
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         required: false
- *         description: Page number for pagination
- *       - in: query
- *         name: pageSize
- *         schema:
- *           type: integer
- *           default: 10
- *         required: false
- *         description: Number of promotions per page
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *                 description: Banner ID for update (optional)
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               dateRange:
+ *                 type: string
+ *                 nullable: true
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *               title:
+ *                 type: string
+ *             required:
+ *               - images
+ *               - title
  *     responses:
  *       200:
- *         description: Successful fetch of promotion(s)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Promotion fetched successfully.
- *                 data:
- *                   oneOf:
- *                     - $ref: '#/db/schema/promotion'
- *                     - type: array
- *                       items:
- *                         $ref: '#/db/schema/promotion'
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     page:
- *                       type: integer
- *                       example: 1
- *                     pageSize:
- *                       type: integer
- *                       example: 10
- *                     totalItems:
- *                       type: integer
- *                       example: 100
- *                     totalPages:
- *                       type: integer
- *                       example: 10
- *       404:
- *         description: Promotion not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Promotion not found.
+ *         description: Banner updated or created successfully
+ *       400:
+ *         description: Invalid input
  *       500:
  *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Server error.
  */
 
 import { Router } from "express";
@@ -111,6 +61,8 @@ import {
   getPromotionsList,
   getDropdownOptionsList,
   addOrUpdatePromotion,
+  createUpdateBanners,
+  getAllBanners,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -151,5 +103,9 @@ router.post("/update/:id", verifyToken, asyncHandler(updateAdminProfile));
 
 // Delete admin by id
 router.post("/delete/:id", verifyToken, asyncHandler(deleteAdmin));
+
+// cms
+router.post("/create-banner", verifyToken, asyncHandler(createUpdateBanners));
+router.get("/get-banner", verifyToken, asyncHandler(getAllBanners));
 
 export default router;

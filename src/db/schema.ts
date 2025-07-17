@@ -6,3 +6,4 @@ export * from "./schema/users";
 export * from "./schema/AdminUsers";
 export * from "./schema/dropdowns";
 export * from "./schema/promotions";
+export * from "./schema/cms";

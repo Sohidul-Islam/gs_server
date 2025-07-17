@@ -3,6 +3,9 @@ import {
   getPublicPaginatedPromotions,
   getPublicPromotionById,
 } from "../models/public.model";
+import { db } from "../db/connection";
+import { banners } from "../db/schema";
+import { desc, eq } from "drizzle-orm";
 
 export const getPublicPromotionList = async (req: Request, res: Response) => {
   try {
@@ -39,6 +42,41 @@ export const getPublicPromotionList = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching promotion:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+// her banner public api
+export const getPublicActiveBannerImages = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const result = await db
+      .select()
+      .from(banners)
+      .where(eq(banners.status, "active"))
+      .orderBy(desc(banners.id));
+
+    const allImages = result.flatMap((banner) => {
+      try {
+        const images = JSON.parse(banner.images);
+        return Array.isArray(images) ? images : [];
+      } catch {
+        return [];
+      }
+    });
+
+    return res.status(200).json({
+      status: true,
+      data: allImages, // just the images
+      message: "Active banner images fetched successfully.",
+    });
+  } catch (error) {
+    console.error("getActiveBannerImages error:", error);
     return res.status(500).json({
       status: false,
       message: "Server error.",

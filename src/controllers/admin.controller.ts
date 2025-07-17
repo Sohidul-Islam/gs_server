@@ -18,8 +18,8 @@ import {
   updatePromotion,
 } from "../models/admin.model";
 import { db } from "../db/connection";
-import { adminUsers, dropdownOptions, dropdowns } from "../db/schema";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { adminUsers, banners, dropdownOptions, dropdowns } from "../db/schema";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
@@ -921,6 +921,76 @@ export const getPromotionsList = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching promotion:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const createUpdateBanners = async (req: Request, res: Response) => {
+  console.log("hi");
+  try {
+    const { id, images, dateRange, status, title } = req.body;
+
+    // Basic validation
+    if (!Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "Images array is required and cannot be empty.",
+      });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    const payload = {
+      images: JSON.stringify(images),
+      dateRange: dateRange || null,
+      status: validatedStatus as "active" | "inactive",
+      title: title,
+    };
+
+    if (id) {
+      // Update existing banner
+      await db.update(banners).set(payload).where(eq(banners.id, id));
+
+      return res.status(200).json({
+        status: true,
+        message: "Banner updated successfully.",
+      });
+    } else {
+      // Create new banner
+      await db.insert(banners).values(payload);
+
+      return res.status(201).json({
+        status: true,
+        message: "Banner created successfully.",
+      });
+    }
+  } catch (error) {
+    console.error("createUpdateBanners error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const getAllBanners = async (req: Request, res: Response) => {
+  try {
+    const result = await db.select().from(banners).orderBy(desc(banners.id));
+
+    const parsed = result.map((banner) => ({
+      ...banner,
+      images: JSON.parse(banner.images),
+    }));
+
+    return res.status(200).json({
+      status: true,
+      data: parsed,
+      message: "Banner data fetched successfully.",
+    });
+  } catch (error) {
+    console.error("getAllBanners error:", error);
     return res.status(500).json({
       status: false,
       message: "Server error.",

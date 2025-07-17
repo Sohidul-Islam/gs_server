@@ -1,9 +1,10 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, or, and, like, inArray, ne } from "drizzle-orm";
+import { eq, or, and, like, inArray, ne, desc } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
   adminUsers,
+  announcements,
   dropdownOptions,
   dropdowns,
   promotions,
@@ -448,5 +449,58 @@ export const getPaginatedPromotions = async (
       total,
       totalPages: Math.ceil(total / pageSize),
     },
+  };
+};
+export const getPaginatedAnnouncements = async (
+  page: number,
+  pageSize: number
+) => {
+  const offset = (page - 1) * pageSize;
+
+  const rows = await db
+    .select()
+    .from(announcements)
+    .orderBy(desc(announcements.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(promotions);
+
+  const total = Number(countResult[0].count);
+
+  return {
+    rows,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+};
+
+// shared delete logic
+export const deleteById = async (
+  table: any,
+  id: number
+): Promise<{ success: boolean; message: string }> => {
+  // Check if record exists
+  const record = await db.select().from(table).where(eq(table.id, id));
+
+  if (record.length === 0) {
+    return {
+      success: false,
+      message: "Record not found.",
+    };
+  }
+
+  // Proceed with deletion
+  await db.delete(table).where(eq(table.id, id));
+
+  return {
+    success: true,
+    message: "Record deleted successfully.",
   };
 };

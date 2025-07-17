@@ -16,10 +16,19 @@ import {
   getPaginatedDropdownOptions,
   getSingleDropdownOptionById,
   updatePromotion,
+  getPaginatedAnnouncements,
+  deleteById,
 } from "../models/admin.model";
 import { db } from "../db/connection";
-import { adminUsers, banners, dropdownOptions, dropdowns } from "../db/schema";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+  adminUsers,
+  announcements,
+  banners,
+  dropdownOptions,
+  dropdowns,
+  website_popups,
+} from "../db/schema";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
@@ -927,11 +936,16 @@ export const getPromotionsList = async (req: Request, res: Response) => {
     });
   }
 };
-
+// cms
 export const createUpdateBanners = async (req: Request, res: Response) => {
   console.log("hi");
   try {
     const { id, images, dateRange, status, title } = req.body;
+    // Generate title if missing or not a string
+    const finalTitle =
+      typeof title === "string" && title.trim().length > 0
+        ? title.trim()
+        : `Banner - ${Math.floor(1000 + Math.random() * 9000)}`;
 
     // Basic validation
     if (!Array.isArray(images) || images.length === 0) {
@@ -960,7 +974,7 @@ export const createUpdateBanners = async (req: Request, res: Response) => {
       });
     } else {
       // Create new banner
-      await db.insert(banners).values(payload);
+      await db.insert(banners).values({ ...payload, title: finalTitle });
 
       return res.status(201).json({
         status: true,
@@ -977,7 +991,10 @@ export const createUpdateBanners = async (req: Request, res: Response) => {
 };
 export const getAllBanners = async (req: Request, res: Response) => {
   try {
-    const result = await db.select().from(banners).orderBy(desc(banners.id));
+    const result = await db
+      .select()
+      .from(banners)
+      .orderBy(desc(banners.createdAt));
 
     const parsed = result.map((banner) => ({
       ...banner,
@@ -996,4 +1013,259 @@ export const getAllBanners = async (req: Request, res: Response) => {
       message: "Server error.",
     });
   }
+};
+export const createOrUpdateAnnouncement = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, message, status, title, dateRange } = req.body;
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({
+        status: false,
+        message: "Announcement message is required.",
+      });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    // Generate title if missing or not a string
+    const finalTitle =
+      typeof title === "string" && title.trim().length > 0
+        ? title.trim()
+        : `Announcement - ${Math.floor(1000 + Math.random() * 9000)}`;
+
+    if (id) {
+      // If status is active, set all others to inactive first
+      if (validatedStatus === "active") {
+        await db
+          .update(announcements)
+          .set({ status: "inactive" })
+          .where(ne(announcements.id, id));
+      }
+
+      // Update the specific announcement
+      await db
+        .update(announcements)
+        .set({ message, status: validatedStatus })
+        .where(eq(announcements.id, id));
+
+      return res.status(200).json({
+        status: true,
+        message: "Announcement updated successfully.",
+      });
+    } else {
+      // Check total count limit
+      const totalCountResult = await db
+        .select({ count: sql`COUNT(*)`.as("count") })
+        .from(announcements);
+      const totalCount = Number(totalCountResult[0].count);
+
+      if (totalCount >= 10) {
+        return res.status(400).json({
+          status: false,
+          message: "You cannot create more than 10 announcements.",
+        });
+      }
+
+      // If status is active, set all others to inactive first
+      if (validatedStatus === "active") {
+        await db.update(announcements).set({ status: "inactive" });
+      }
+
+      // Create new announcement
+      await db.insert(announcements).values({
+        message,
+        status: validatedStatus,
+        title: finalTitle || "",
+        dateRange: dateRange,
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: "Announcement created successfully.",
+      });
+    }
+  } catch (error) {
+    console.error("createOrUpdateAnnouncement error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const getAllAnnouncements = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+
+    const result = await getPaginatedAnnouncements(
+      Number(page),
+      Number(pageSize)
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "Announcements fetched successfully.",
+      data: result.rows,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching announcements:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const deleteAnnouncement = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Invalid Announcement ID." });
+  }
+
+  const result = await deleteById(announcements, id);
+
+  if (!result.success) {
+    return res.status(404).json({ status: false, message: result.message });
+  }
+
+  return res.status(200).json({ status: true, message: result.message });
+};
+
+export const createOrUpdateWebsitePopup = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, message, status, title, dateRange } = req.body;
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({
+        status: false,
+        message: "Popup description (HTML) is required.",
+      });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    const finalTitle =
+      typeof title === "string" && title.trim().length > 0
+        ? title.trim()
+        : `Popup - ${Math.floor(1000 + Math.random() * 9000)}`;
+
+    if (id) {
+      if (validatedStatus === "active") {
+        await db
+          .update(website_popups)
+          .set({ status: "inactive" })
+          .where(ne(website_popups.id, id));
+      }
+
+      await db
+        .update(website_popups)
+        .set({ message, status: validatedStatus, title: finalTitle })
+        .where(eq(website_popups.id, id));
+
+      return res.status(200).json({
+        status: true,
+        message: "Website popup updated successfully.",
+      });
+    } else {
+      const totalCountResult = await db
+        .select({ count: sql`COUNT(*)`.as("count") })
+        .from(website_popups);
+      const totalCount = Number(totalCountResult[0].count);
+
+      if (totalCount >= 10) {
+        return res.status(400).json({
+          status: false,
+          message: "You cannot create more than 10 website popups.",
+        });
+      }
+
+      if (validatedStatus === "active") {
+        await db.update(website_popups).set({ status: "inactive" });
+      }
+
+      await db.insert(website_popups).values({
+        message,
+        status: validatedStatus,
+        title: finalTitle,
+        dateRange,
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: "Website popup created successfully.",
+      });
+    }
+  } catch (error) {
+    console.error("createOrUpdateWebsitePopup error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const getAllWebsitePopups = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+
+    const offset = (Number(page) - 1) * Number(pageSize);
+
+    const rows = await db
+      .select()
+      .from(website_popups)
+      .limit(Number(pageSize))
+      .offset(offset)
+      .orderBy(desc(website_popups.id));
+
+    const countResult = await db
+      .select({ count: sql`COUNT(*)`.as("count") })
+      .from(website_popups);
+
+    const totalCount = Number(countResult[0].count);
+
+    return res.status(200).json({
+      status: true,
+      message: "Website popups fetched successfully.",
+      data: rows,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / Number(pageSize)),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching website popups:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const deletePopup = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Invalid popup ID." });
+  }
+
+  const result = await deleteById(website_popups, id);
+
+  if (!result.success) {
+    return res.status(404).json({ status: false, message: result.message });
+  }
+
+  return res.status(200).json({ status: true, message: result.message });
 };

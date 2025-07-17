@@ -4,7 +4,7 @@ import {
   getPublicPromotionById,
 } from "../models/public.model";
 import { db } from "../db/connection";
-import { banners } from "../db/schema";
+import { announcements, banners, website_popups } from "../db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export const getPublicPromotionList = async (req: Request, res: Response) => {
@@ -77,6 +77,62 @@ export const getPublicActiveBannerImages = async (
     });
   } catch (error) {
     console.error("getActiveBannerImages error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const getActiveAnnouncement = async (req: Request, res: Response) => {
+  try {
+    const activeAnnouncement = await db
+      .select()
+      .from(announcements)
+      .where(eq(announcements.status, "active"))
+      .limit(1);
+
+    if (activeAnnouncement.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No active announcement found.",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Active announcement fetched successfully.",
+      data: activeAnnouncement[0],
+    });
+  } catch (error) {
+    console.error("Error fetching active announcement:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const getActivePopup = async (req: Request, res: Response) => {
+  try {
+    const activePopup = await db
+      .select()
+      .from(website_popups)
+      .where(eq(website_popups.status, "active"))
+      .limit(1);
+
+    if (activePopup.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No active popup found.",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Active popup fetched successfully.",
+      data: activePopup[0],
+    });
+  } catch (error) {
+    console.error("Error fetching active popup:", error);
     return res.status(500).json({
       status: false,
       message: "Server error.",

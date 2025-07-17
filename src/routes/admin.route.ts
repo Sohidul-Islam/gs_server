@@ -63,6 +63,12 @@ import {
   addOrUpdatePromotion,
   createUpdateBanners,
   getAllBanners,
+  createOrUpdateAnnouncement,
+  getAllAnnouncements,
+  createOrUpdateWebsitePopup,
+  getAllWebsitePopups,
+  deletePopup,
+  deleteAnnouncement,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -105,7 +111,35 @@ router.post("/update/:id", verifyToken, asyncHandler(updateAdminProfile));
 router.post("/delete/:id", verifyToken, asyncHandler(deleteAdmin));
 
 // cms
-router.post("/create-banner", verifyToken, asyncHandler(createUpdateBanners));
+router.post("/banner", verifyToken, asyncHandler(createUpdateBanners));
 router.get("/get-banner", verifyToken, asyncHandler(getAllBanners));
+
+router.post(
+  "/announcement",
+  verifyToken,
+  asyncHandler(createOrUpdateAnnouncement)
+);
+router.get(
+  "/get-announcements",
+  verifyToken,
+  asyncHandler(getAllAnnouncements)
+);
+router.post(
+  "/delete-announcement/:id",
+  verifyToken,
+  asyncHandler(deleteAnnouncement)
+);
+
+router.post(
+  "/website-popup",
+  verifyToken,
+  asyncHandler(createOrUpdateWebsitePopup)
+);
+router.get(
+  "/get-website-popups",
+  verifyToken,
+  asyncHandler(getAllWebsitePopups)
+);
+router.post("/delete-popup/:id", verifyToken, asyncHandler(deletePopup));
 
 export default router;

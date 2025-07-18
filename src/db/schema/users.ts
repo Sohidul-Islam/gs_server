@@ -39,6 +39,7 @@ export const users = mysqlTable("users", {
   ip_address: varchar("ip_address", { length: 45 }),
   device_token: text("device_token"),
   referred_by: int("referred_by"),
+  referred_by_admin_user: int("referred_by_admin_user"),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

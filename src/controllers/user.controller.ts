@@ -14,6 +14,7 @@ import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { generateUniqueRefCode } from "../utils/refCode";
 import { findUserByReferCode } from "../models/user.model";
+import { findAdminByRefCode } from "../models/admin.model";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -64,12 +65,19 @@ export const registerUser = async (req: Request, res: Response) => {
     const uniqueReferCode = await generateUniqueRefCode("user");
     // If refer_code is provided, find the referring user
     let referred_by = undefined;
+    let referred_by_admin_user = undefined;
     if (refer_code) {
       const referringUser = await findUserByReferCode(refer_code);
       if (referringUser && referringUser.id) {
         referred_by = referringUser.id;
+      } else {
+        const referringAdmin = await findAdminByRefCode(refer_code);
+        if (referringAdmin && referringAdmin?.id) {
+          referred_by_admin_user = referringAdmin.id;
+        }
       }
     }
+
     const user = await createUser({
       username,
       fullname,
@@ -81,6 +89,7 @@ export const registerUser = async (req: Request, res: Response) => {
       isAgreeWithTerms,
       createdBy,
       referred_by,
+      referred_by_admin_user,
     });
     return res.status(201).json({
       status: true,

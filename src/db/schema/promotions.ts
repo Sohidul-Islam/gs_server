@@ -12,7 +12,7 @@ import {
 import { sql } from "drizzle-orm";
 
 export const promotions = mysqlTable("promotions", {
-  id: serial("id").primaryKey().autoincrement(),
+  id: int("id").primaryKey().autoincrement(),
   promotionName: varchar("promotion_name", { length: 300 }).notNull().unique(),
   promotionTypeId: int("promotion_type_id").notNull(),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),

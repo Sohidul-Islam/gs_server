@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   datetime,
+  int,
   mysqlEnum,
   mysqlTable,
   serial,
@@ -9,7 +10,7 @@ import {
 } from "drizzle-orm/mysql-core";
 
 export const banners = mysqlTable("hero_banners", {
-  id: serial("id").primaryKey().autoincrement(),
+  id: int("id").primaryKey().autoincrement(),
   dateRange: varchar("date_range", { length: 255 }),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
   images: text("banner_images").notNull(),
@@ -18,7 +19,7 @@ export const banners = mysqlTable("hero_banners", {
 });
 
 export const announcements = mysqlTable("announcements", {
-  id: serial("id").primaryKey(),
+  id: int("id").primaryKey().autoincrement(),
   title: varchar("title", { length: 255 }).notNull(),
   message: varchar("message", { length: 1500 }).notNull(),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
@@ -26,7 +27,7 @@ export const announcements = mysqlTable("announcements", {
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 export const website_popups = mysqlTable("website_popups", {
-  id: serial("id").primaryKey(),
+  id: int("id").primaryKey().autoincrement(),
   title: varchar("title", { length: 255 }).notNull(),
   message: varchar("message", { length: 3000 }).notNull(),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),

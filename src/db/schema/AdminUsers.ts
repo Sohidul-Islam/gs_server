@@ -12,7 +12,7 @@ import {
 import { relations, sql } from "drizzle-orm";
 
 export const adminUsers = mysqlTable("admin_users", {
-  id: serial("id").primaryKey().autoincrement(),
+  id: int("id").primaryKey().autoincrement(),
 
   username: varchar("username", { length: 50 }),
   fullname: varchar("fullname", { length: 100 }),

@@ -15,6 +15,7 @@ import { eq } from "drizzle-orm";
 import { generateUniqueRefCode } from "../utils/refCode";
 import { findUserByReferCode } from "../models/user.model";
 import { findAdminByRefCode } from "../models/admin.model";
+import { generateJwtToken } from "../utils/jwt";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -158,11 +159,12 @@ export const loginUser = async (req: Request, res: Response) => {
     const browser_version = uaResult.browser.version || "Unknown";
     const ip_address = getClientIp(req);
     // You can now use device_type, device_name, os_version, browser, browser_version, ip_address as needed (e.g., log, save to DB, etc.)
-    const token = jwt.sign(
-      { id: user.id, email: user.email, username: user.username },
-      process.env.JWT_SECRET || "your_jwt_secret",
-      { expiresIn: "1h" }
-    );
+    const token = generateJwtToken({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      userType: "user",
+    });
 
     await db
       .update(users)

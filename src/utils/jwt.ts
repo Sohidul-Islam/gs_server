@@ -5,10 +5,11 @@ export function verifyJwt(token: string): any {
 }
 
 export interface JwtPayload {
-  id: number;
-  email: string;
-  username: string;
-  role?: string;
+  id: number|null;
+  email: string|null;
+  username: string|null;
+  role?: string|null;
+  userType: "user"|"admin"
 }
 
 export type Unit =
@@ -53,7 +54,7 @@ export type StringValue =
 
 export function generateJwtToken(payload: JwtPayload, expiresIn: (StringValue|number) = "1h"): string {
   return jwt.sign(
-    { ...payload, expiresIn },
+    { ...payload },
     process.env.JWT_SECRET || "your_jwt_secret",
     {
       expiresIn: expiresIn,

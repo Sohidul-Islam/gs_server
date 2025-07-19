@@ -30,7 +30,7 @@ import {
   website_popups,
 } from "../db/schema";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
-import { verifyJwt } from "../utils/jwt";
+import { generateJwtToken, verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
 import { DecodedUser } from "../middlewares/verifyToken";
@@ -259,16 +259,14 @@ export const adminLogin = async (
         })
         .where(eq(adminUsers.id, admin.id));
 
-    const token = jwt.sign(
-      {
-        id: admin.id,
-        email: admin.email,
-        username: admin.username,
-        role: admin.role,
-      },
-      process.env.JWT_SECRET || "your_jwt_secret",
-      { expiresIn: "1h" }
-    );
+    const token = generateJwtToken({
+      id: admin.id,
+      email: admin.email,
+      username: admin.username,
+      role: admin.role,
+      userType: "admin",
+    });
+    
     res.json({
       status: true,
       message: "Login successful",

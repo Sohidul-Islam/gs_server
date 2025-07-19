@@ -12,6 +12,7 @@ import {
 import { db } from "../db/connection";
 import { PromotionDataType } from "../utils/types";
 import { promotionSelectFields } from "../selected_field/promotionSelectFields";
+import { AnyMySqlTable } from "drizzle-orm/mysql-core";
 
 export const findAdminByUsernameOrEmail = async (usernameOrEmail: string) => {
   const [admin] = await db
@@ -513,4 +514,12 @@ export const deleteById = async (
     success: true,
     message: "Record deleted successfully.",
   };
+};
+
+export const getTotalCount = async (table: AnyMySqlTable) => {
+  const result = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(table);
+
+  return Number(result[0].count);
 };

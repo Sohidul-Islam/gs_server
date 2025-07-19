@@ -19,14 +19,19 @@ import {
   getPaginatedAnnouncements,
   deleteById,
   findAdminByRefCode,
+  getTotalCount,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import {
   adminUsers,
+  ambassadors,
   announcements,
   banners,
   dropdownOptions,
   dropdowns,
+  gamingLicenses,
+  sponsors,
+  video_advertisement,
   website_popups,
 } from "../db/schema";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
@@ -1075,11 +1080,7 @@ export const createOrUpdateAnnouncement = async (
         message: "Announcement updated successfully.",
       });
     } else {
-      // Check total count limit
-      const totalCountResult = await db
-        .select({ count: sql`COUNT(*)`.as("count") })
-        .from(announcements);
-      const totalCount = Number(totalCountResult[0].count);
+      const totalCount = await getTotalCount(announcements);
 
       if (totalCount >= 10) {
         return res.status(400).json({
@@ -1195,10 +1196,7 @@ export const createOrUpdateWebsitePopup = async (
         message: "Website popup updated successfully.",
       });
     } else {
-      const totalCountResult = await db
-        .select({ count: sql`COUNT(*)`.as("count") })
-        .from(website_popups);
-      const totalCount = Number(totalCountResult[0].count);
+      const totalCount = await getTotalCount(website_popups);
 
       if (totalCount >= 10) {
         return res.status(400).json({
@@ -1245,11 +1243,7 @@ export const getAllWebsitePopups = async (req: Request, res: Response) => {
       .offset(offset)
       .orderBy(desc(website_popups.id));
 
-    const countResult = await db
-      .select({ count: sql`COUNT(*)`.as("count") })
-      .from(website_popups);
-
-    const totalCount = Number(countResult[0].count);
+    const totalCount = await getTotalCount(website_popups);
 
     return res.status(200).json({
       status: true,
@@ -1281,6 +1275,480 @@ export const deletePopup = async (req: Request, res: Response) => {
   }
 
   const result = await deleteById(website_popups, id);
+
+  if (!result.success) {
+    return res.status(404).json({ status: false, message: result.message });
+  }
+
+  return res.status(200).json({ status: true, message: result.message });
+};
+
+export const createOrUpdateVideoAdvertisement = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, description, videoUrl, status, title, dateRange } = req.body;
+
+    if (!description || typeof description !== "string") {
+      return res.status(400).json({
+        status: false,
+        message: "Advertisement description (HTML) is required.",
+      });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    const finalTitle =
+      typeof title === "string" && title.trim().length > 0
+        ? title.trim()
+        : `Advertisement - ${Math.floor(1000 + Math.random() * 9000)}`;
+
+    if (id) {
+      if (validatedStatus === "active") {
+        await db
+          .update(video_advertisement)
+          .set({ status: "inactive" })
+          .where(ne(video_advertisement.id, id));
+      }
+
+      await db
+        .update(video_advertisement)
+        .set({ description, status: validatedStatus, title: finalTitle })
+        .where(eq(video_advertisement.id, id));
+
+      return res.status(200).json({
+        status: true,
+        message: "Website advertisement updated successfully.",
+      });
+    } else {
+      const totalCount = await getTotalCount(video_advertisement);
+
+      if (totalCount >= 10) {
+        return res.status(400).json({
+          status: false,
+          message: "You cannot create more than 10 website advertisement.",
+        });
+      }
+
+      if (validatedStatus === "active") {
+        await db.update(video_advertisement).set({ status: "inactive" });
+      }
+
+      await db.insert(video_advertisement).values({
+        videoUrl,
+        description,
+        status: validatedStatus,
+        title: finalTitle,
+        dateRange,
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: "Website advertisement created successfully.",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const getAllVideoAdvertisement = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+
+    const offset = (Number(page) - 1) * Number(pageSize);
+
+    const rows = await db
+      .select()
+      .from(video_advertisement)
+      .limit(Number(pageSize))
+      .offset(offset)
+      .orderBy(desc(video_advertisement.id));
+
+    const totalCount = await getTotalCount(video_advertisement);
+
+    return res.status(200).json({
+      status: true,
+      message: "Website advertisement fetched successfully.",
+      data: rows,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / Number(pageSize)),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching website advertisement:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const deleteAdvertisement = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Invalid advertisement ID." });
+  }
+
+  const result = await deleteById(video_advertisement, id);
+
+  if (!result.success) {
+    return res.status(404).json({ status: false, message: result.message });
+  }
+
+  return res.status(200).json({ status: true, message: result.message });
+};
+
+export const createOrUpdateSponsor = async (req: Request, res: Response) => {
+  try {
+    const { id, name, logo, companyType, description, duration, status } =
+      req.body;
+
+    if (!name || typeof name !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Sponsor name is required." });
+    }
+
+    if (!logo || typeof logo !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Sponsor logo is required." });
+    }
+
+    if (!companyType || typeof companyType !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Company type is required." });
+    }
+
+    if (!duration || typeof duration !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Sponsor duration is required." });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    if (id) {
+      await db
+        .update(sponsors)
+        .set({
+          name,
+          logo,
+          companyType,
+          description,
+          duration,
+          status: validatedStatus,
+        })
+        .where(eq(sponsors.id, id));
+
+      return res
+        .status(200)
+        .json({ status: true, message: "Sponsor updated successfully." });
+    } else {
+      await db.insert(sponsors).values({
+        name,
+        logo,
+        companyType,
+        description,
+        duration,
+        status: validatedStatus,
+      });
+
+      return res
+        .status(201)
+        .json({ status: true, message: "Sponsor created successfully." });
+    }
+  } catch (error) {
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+
+export const getAllSponsors = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+
+    const offset = (Number(page) - 1) * Number(pageSize);
+
+    const rows = await db
+      .select()
+      .from(sponsors)
+      .limit(Number(pageSize))
+      .offset(offset)
+      .orderBy(desc(sponsors.id));
+
+    const totalCount = await getTotalCount(sponsors);
+
+    return res.status(200).json({
+      status: true,
+      message: "Sponsors fetched successfully.",
+      data: rows,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / Number(pageSize)),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching sponsors:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const deleteSponsor = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Invalid sponsor ID." });
+  }
+
+  const result = await deleteById(sponsors, id);
+
+  if (!result.success) {
+    return res.status(404).json({ status: false, message: result.message });
+  }
+
+  return res.status(200).json({ status: true, message: result.message });
+};
+
+export const createOrUpdateAmbassador = async (req: Request, res: Response) => {
+  try {
+    const { id, name, photo, signature, description, duration, status } =
+      req.body;
+
+    if (!name || typeof name !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Ambassador name is required." });
+    }
+    if (!photo || typeof photo !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Ambassador photo is required." });
+    }
+    if (!signature || typeof signature !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Ambassador signature is required." });
+    }
+    if (!duration || typeof duration !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Duration is required." });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    if (id) {
+      // Update existing ambassador
+      await db
+        .update(ambassadors)
+        .set({
+          name,
+          photo,
+          signature,
+          description,
+          duration,
+          status: validatedStatus,
+        })
+        .where(eq(ambassadors.id, id));
+
+      return res
+        .status(200)
+        .json({ status: true, message: "Ambassador updated successfully." });
+    } else {
+      // Create new ambassador
+      await db.insert(ambassadors).values({
+        name,
+        photo,
+        signature,
+        description,
+        duration,
+        status: validatedStatus,
+      });
+
+      return res
+        .status(201)
+        .json({ status: true, message: "Ambassador created successfully." });
+    }
+  } catch (error) {
+    console.error("Error creating/updating ambassador:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+export const getAllAmbassador = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+
+    const offset = (Number(page) - 1) * Number(pageSize);
+
+    const rows = await db
+      .select()
+      .from(ambassadors)
+      .limit(Number(pageSize))
+      .offset(offset)
+      .orderBy(desc(ambassadors.id));
+
+    const totalCount = await getTotalCount(ambassadors);
+
+    return res.status(200).json({
+      status: true,
+      message: "Ambassadors fetched successfully.",
+      data: rows,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / Number(pageSize)),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching ambassadors:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const deleteAmbassador = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Invalid ambassador ID." });
+  }
+
+  const result = await deleteById(ambassadors, id);
+
+  if (!result.success) {
+    return res.status(404).json({ status: false, message: result.message });
+  }
+
+  return res.status(200).json({ status: true, message: result.message });
+};
+
+export const createOrUpdateGamingLicenses = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, name, icon, duration, status } = req.body;
+
+    if (!name || typeof name !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Gaming license name is required." });
+    }
+    if (!icon || typeof icon !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Gaming license icon is required." });
+    }
+    if (!duration || typeof duration !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Duration is required." });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    if (id) {
+      // Update existing GamingLicenses
+      await db
+        .update(gamingLicenses)
+        .set({
+          name,
+          icon,
+          duration,
+          status: validatedStatus,
+        })
+        .where(eq(gamingLicenses.id, id));
+
+      return res.status(200).json({
+        status: true,
+        message: "Gaming license updated successfully.",
+      });
+    } else {
+      // Create new ambassador
+      await db.insert(gamingLicenses).values({
+        name,
+        icon,
+        duration,
+        status: validatedStatus,
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: "Gaming license created successfully.",
+      });
+    }
+  } catch (error) {
+    console.error("Error creating/updating Gaming license:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+export const getAllGamingLicenses = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+
+    const offset = (Number(page) - 1) * Number(pageSize);
+
+    const rows = await db
+      .select()
+      .from(gamingLicenses)
+      .limit(Number(pageSize))
+      .offset(offset)
+      .orderBy(desc(gamingLicenses.id));
+
+    const totalCount = await getTotalCount(gamingLicenses);
+
+    return res.status(200).json({
+      status: true,
+      message: "Gaming license fetched successfully.",
+      data: rows,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / Number(pageSize)),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching gaming license:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const deleteGamingLicenses = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Invalid gaming license ID." });
+  }
+
+  const result = await deleteById(gamingLicenses, id);
 
   if (!result.success) {
     return res.status(404).json({ status: false, message: result.message });

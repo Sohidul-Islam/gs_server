@@ -1,45 +1,3 @@
-/**
- * @swagger
- * /api/admin/create-banner:
- *   post:
- *     summary: Create or update a banner
- *     tags: [Banners]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *                 description: Banner ID for update (optional)
- *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *               dateRange:
- *                 type: string
- *                 nullable: true
- *               status:
- *                 type: string
- *                 enum: [active, inactive]
- *               title:
- *                 type: string
- *             required:
- *               - images
- *               - title
- *     responses:
- *       200:
- *         description: Banner updated or created successfully
- *       400:
- *         description: Invalid input
- *       500:
- *         description: Server error
- */
-
 import { Router } from "express";
 import { verifyToken } from "../middlewares/verifyToken";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -69,6 +27,18 @@ import {
   getAllWebsitePopups,
   deletePopup,
   deleteAnnouncement,
+  createOrUpdateVideoAdvertisement,
+  getAllVideoAdvertisement,
+  deleteAdvertisement,
+  createOrUpdateSponsor,
+  getAllSponsors,
+  deleteSponsor,
+  createOrUpdateAmbassador,
+  getAllAmbassador,
+  deleteAmbassador,
+  createOrUpdateGamingLicenses,
+  getAllGamingLicenses,
+  deleteGamingLicenses,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -142,4 +112,52 @@ router.get(
 );
 router.post("/delete-popup/:id", verifyToken, asyncHandler(deletePopup));
 
+router.post(
+  "/create-update-advertisement",
+  verifyToken,
+  asyncHandler(createOrUpdateVideoAdvertisement)
+);
+router.get(
+  "/get-advertisement",
+  verifyToken,
+  asyncHandler(getAllVideoAdvertisement)
+);
+router.post(
+  "/delete-advertisement/:id",
+  verifyToken,
+  asyncHandler(deleteAdvertisement)
+);
+router.post(
+  "/create-update-sponsor",
+  verifyToken,
+  asyncHandler(createOrUpdateSponsor)
+);
+router.get("/get-sponsors", verifyToken, asyncHandler(getAllSponsors));
+router.post("/delete-sponsor/:id", verifyToken, asyncHandler(deleteSponsor));
+router.post(
+  "/create-update-ambassador",
+  verifyToken,
+  asyncHandler(createOrUpdateAmbassador)
+);
+router.get("/get-ambassadors", verifyToken, asyncHandler(getAllAmbassador));
+router.post(
+  "/delete-ambassador/:id",
+  verifyToken,
+  asyncHandler(deleteAmbassador)
+);
+router.post(
+  "/create-update-gaming-license",
+  verifyToken,
+  asyncHandler(createOrUpdateGamingLicenses)
+);
+router.get(
+  "/get-gaming-licenses",
+  verifyToken,
+  asyncHandler(getAllGamingLicenses)
+);
+router.post(
+  "/delete-gaming-license/:id",
+  verifyToken,
+  asyncHandler(deleteGamingLicenses)
+);
 export default router;

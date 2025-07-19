@@ -27,6 +27,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
+
+
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const {

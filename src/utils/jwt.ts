@@ -11,7 +11,7 @@ export interface JwtPayload {
   role?: string;
 }
 
-type Unit =
+export type Unit =
 | "Years"
 | "Year"
 | "Yrs"
@@ -44,9 +44,9 @@ type Unit =
 | "Msec"
 | "Ms";
 
-type UnitAnyCase = Unit | Uppercase<Unit> | Lowercase<Unit>;
+export type UnitAnyCase = Unit | Uppercase<Unit> | Lowercase<Unit>;
 
-type StringValue =
+export type StringValue =
     | `${number}`
     | `${number}${UnitAnyCase}`
     | `${number} ${UnitAnyCase}`;

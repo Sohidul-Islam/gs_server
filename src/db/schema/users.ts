@@ -14,7 +14,7 @@ import { adminUsers } from "./AdminUsers";
 import { currencies } from "./currency";
 
 export const users = mysqlTable("users", {
-  id: serial("id").primaryKey().autoincrement(),
+  id: int("id").primaryKey().autoincrement(),
   username: varchar("username", { length: 50 }),
   fullname: varchar("fullname", { length: 100 }),
   phone: varchar("phone", { length: 20 }).unique(),
@@ -38,6 +38,8 @@ export const users = mysqlTable("users", {
   browser_version: varchar("browser_version", { length: 50 }),
   ip_address: varchar("ip_address", { length: 45 }),
   device_token: text("device_token"),
+  referred_by: int("referred_by"),
+  referred_by_admin_user: int("referred_by_admin_user"),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

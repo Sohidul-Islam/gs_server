@@ -32,14 +32,26 @@ export const createUser = async (data: {
   refer_code?: string;
   isAgreeWithTerms: boolean;
   createdBy?: number;
+  referred_by?: number;
+  referred_by_admin_user?: number;
 }) => {
   // const hashedPassword = await bcrypt.hash(data.password, 10);
   const [user] = await db.insert(users).values({
     ...data,
     created_by: data?.createdBy,
+    referred_by: data?.referred_by,
+    referred_by_admin_user: data?.referred_by_admin_user,
     // password: hashedPassword,
   });
 
+  return user;
+};
+
+export const findUserByReferCode = async (refer_code: string) => {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.refer_code, refer_code));
   return user;
 };
 
@@ -51,6 +63,8 @@ export interface UserFilters {
   createdBy?: number;
   page?: number;
   pageSize?: number;
+  referred_by?: number;
+  referred_by_admin_user?: number;
 }
 
 export const getUsersWithFilters = async (filters: UserFilters) => {
@@ -62,6 +76,8 @@ export const getUsersWithFilters = async (filters: UserFilters) => {
     page = 1,
     pageSize = 10,
     createdBy,
+    referred_by,
+    referred_by_admin_user,
   } = filters;
 
   const whereClauses = [];
@@ -70,6 +86,13 @@ export const getUsersWithFilters = async (filters: UserFilters) => {
   if (phone) whereClauses.push(eq(users.phone, phone));
   if (status) whereClauses.push(eq(users.status as any, status));
   if (createdBy) whereClauses.push(eq(users.created_by, createdBy));
+  if (referred_by_admin_user)
+    whereClauses.push(eq(users.referred_by_admin_user, referred_by_admin_user));
+
+  if (referred_by) {
+    whereClauses.push(eq(users.referred_by, referred_by));
+  }
+
   if (keyword) {
     const kw = `%${keyword}%`;
     whereClauses.push(

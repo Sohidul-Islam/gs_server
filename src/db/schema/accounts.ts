@@ -13,7 +13,7 @@ import { users } from "./users";
 import { currencies } from "./currency";
 
 export const accountTypes = mysqlTable("account_types", {
-  id: serial("id").primaryKey().autoincrement(),
+  id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 50 }).notNull().unique(), // e.g., wallet, bank, crypto
   description: varchar("description", { length: 255 }),
   status: mysqlEnum("status", ["active", "inactive"]).default("active"),
@@ -21,7 +21,7 @@ export const accountTypes = mysqlTable("account_types", {
 });
 
 export const accounts = mysqlTable("accounts", {
-  id: serial("id").primaryKey().autoincrement(),
+  id: int("id").primaryKey().autoincrement(),
   user_id: int("user_id").notNull(),
   currency_id: int("currency_id").notNull(),
   account_type_id: int("account_type_id").notNull(),

@@ -12,7 +12,7 @@ import {
 import { relations, sql } from "drizzle-orm";
 
 export const adminUsers = mysqlTable("admin_users", {
-  id: serial("id").primaryKey().autoincrement(),
+  id: int("id").primaryKey().autoincrement(),
 
   username: varchar("username", { length: 50 }),
   fullname: varchar("fullname", { length: 100 }),
@@ -55,6 +55,7 @@ export const adminUsers = mysqlTable("admin_users", {
   device_token: text("device_token"),
 
   createdBy: int("created_by"),
+  referred_by: int("referred_by"),
 
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });

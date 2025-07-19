@@ -5,9 +5,10 @@ import {
   findUserByUsernameOrEmail,
   updateUser as updateUserModel,
   deleteUser as deleteUserModel,
+  getUserById,
 } from "../models/user.model";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+
 import * as UAParser from "ua-parser-js";
 import { db } from "../db/connection";
 import { users } from "../db/schema";
@@ -15,7 +16,7 @@ import { eq } from "drizzle-orm";
 import { generateUniqueRefCode } from "../utils/refCode";
 import { findUserByReferCode } from "../models/user.model";
 import { findAdminByRefCode } from "../models/admin.model";
-import { generateJwtToken } from "../utils/jwt";
+import { generateJwtToken, JwtPayload, verifyJwt } from "../utils/jwt";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -245,5 +246,54 @@ export const deleteUser = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ status: false, message: "Failed to delete user" });
+  }
+};
+
+export const userProfile = async (req: Request, res: Response): Promise<void> => {
+
+
+  const user = (req as unknown as {user: JwtPayload}).user;
+
+  if (!user || user.userType==="user") {
+    res.status(401).json({ status: false, message: "Unauthorized" });
+    return;
+  }
+
+  if(!user.id){
+    res.status(401).json({ status: false, message: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const userData = await getUserById(user.id);
+
+    if (userData?.id) {
+      if (userData.status === "active") {
+        res.status(200).json({
+          status: true,
+          message: "Profile fetched successfully",
+          data: userData,
+        });
+      } else {
+        res.status(401).json({
+          status: false,
+          message: "User is inactive",
+          data: null,
+        });
+      }
+    } else {
+      res.status(200).json({
+        status: false,
+        message: "Profile not found",
+        data: userData,
+      });
+      return;
+    }
+  } catch (error) {
+    if (!res.headersSent) {
+      res
+        .status(200)
+        .json({ message: "Something went wrong", status: false, error });
+    }
   }
 };

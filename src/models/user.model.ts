@@ -55,6 +55,14 @@ export const findUserByReferCode = async (refer_code: string) => {
   return user;
 };
 
+export const getUserById = async (id: number) => {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id));
+  return user;
+};
+
 export interface UserFilters {
   playerId?: number;
   phone?: string;

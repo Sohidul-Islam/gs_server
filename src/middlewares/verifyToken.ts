@@ -17,6 +17,7 @@ export function verifyToken(req: Request, res: Response, next: NextFunction) {
     (err as any).status = 401;
     throw err;
   }
+  
   const token = authHeader.split(" ")[1];
  
   try {

@@ -30,6 +30,7 @@ import {
   dropdownOptions,
   dropdowns,
   gamingLicenses,
+  responsibleGaming,
   sponsors,
   video_advertisement,
   website_popups,
@@ -1290,10 +1291,10 @@ export const createOrUpdateVideoAdvertisement = async (
   try {
     const { id, description, videoUrl, status, title, dateRange } = req.body;
 
-    if (!description || typeof description !== "string") {
+    if (!title || typeof title !== "string") {
       return res.status(400).json({
         status: false,
-        message: "Advertisement description (HTML) is required.",
+        message: "Advertisement title is required.",
       });
     }
 
@@ -1749,6 +1750,120 @@ export const deleteGamingLicenses = async (req: Request, res: Response) => {
   }
 
   const result = await deleteById(gamingLicenses, id);
+
+  if (!result.success) {
+    return res.status(404).json({ status: false, message: result.message });
+  }
+
+  return res.status(200).json({ status: true, message: result.message });
+};
+
+export const createOrUpdateResponsibleGaming = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, name, icon, duration, status } = req.body;
+
+    if (!name || typeof name !== "string") {
+      return res.status(400).json({
+        status: false,
+        message: "Responsible gaming name is required.",
+      });
+    }
+    if (!icon || typeof icon !== "string") {
+      return res.status(400).json({
+        status: false,
+        message: "Responsible gaming icon is required.",
+      });
+    }
+    if (!duration || typeof duration !== "string") {
+      return res
+        .status(400)
+        .json({ status: false, message: "Duration is required." });
+    }
+
+    const validatedStatus = status === "active" ? "active" : "inactive";
+
+    if (id) {
+      // Update existing responsibleGaming
+      await db
+        .update(responsibleGaming)
+        .set({
+          name,
+          icon,
+          duration,
+          status: validatedStatus,
+        })
+        .where(eq(responsibleGaming.id, id));
+
+      return res.status(200).json({
+        status: true,
+        message: "Responsible gaming updated successfully.",
+      });
+    } else {
+      // Create new ambassador
+      await db.insert(responsibleGaming).values({
+        name,
+        icon,
+        duration,
+        status: validatedStatus,
+      });
+
+      return res.status(201).json({
+        status: true,
+        message: "Responsible gaming created successfully.",
+      });
+    }
+  } catch (error) {
+    console.error("Error creating/updating responsible gaming:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+export const getAllResponsibleGaming = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+
+    const offset = (Number(page) - 1) * Number(pageSize);
+
+    const rows = await db
+      .select()
+      .from(responsibleGaming)
+      .limit(Number(pageSize))
+      .offset(offset)
+      .orderBy(desc(responsibleGaming.id));
+
+    const totalCount = await getTotalCount(responsibleGaming);
+
+    return res.status(200).json({
+      status: true,
+      message: "Responsible gaming fetched successfully.",
+      data: rows,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / Number(pageSize)),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching responsible gaming:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+export const deleteResponsibleGaming = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Invalid responsible gaming ID." });
+  }
+
+  const result = await deleteById(responsibleGaming, id);
 
   if (!result.success) {
     return res.status(404).json({ status: false, message: result.message });

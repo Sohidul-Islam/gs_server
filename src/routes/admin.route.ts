@@ -39,6 +39,9 @@ import {
   createOrUpdateGamingLicenses,
   getAllGamingLicenses,
   deleteGamingLicenses,
+  createOrUpdateResponsibleGaming,
+  getAllResponsibleGaming,
+  deleteResponsibleGaming,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -159,5 +162,20 @@ router.post(
   "/delete-gaming-license/:id",
   verifyToken,
   asyncHandler(deleteGamingLicenses)
+);
+router.post(
+  "/create-update-responsible-gaming",
+  verifyToken,
+  asyncHandler(createOrUpdateResponsibleGaming)
+);
+router.get(
+  "/get-responsible-gamings",
+  verifyToken,
+  asyncHandler(getAllResponsibleGaming)
+);
+router.post(
+  "/delete-responsible-gaming/:id",
+  verifyToken,
+  asyncHandler(deleteResponsibleGaming)
 );
 export default router;

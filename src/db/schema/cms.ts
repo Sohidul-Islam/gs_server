@@ -37,7 +37,7 @@ export const website_popups = mysqlTable("website_popups", {
 export const video_advertisement = mysqlTable("video_advertisement", {
   id: int("id").primaryKey().autoincrement(),
   title: varchar("title", { length: 255 }).notNull(),
-  description: varchar("description", { length: 3000 }).notNull(),
+  description: varchar("description", { length: 3000 }),
   videoUrl: varchar("video_url", { length: 500 }).notNull(),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
   dateRange: varchar("date_range", { length: 255 }),
@@ -64,6 +64,14 @@ export const ambassadors = mysqlTable("ambassadors", {
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 export const gamingLicenses = mysqlTable("gaming_licenses", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull(),
+  icon: varchar("icon", { length: 500 }).notNull(),
+  duration: varchar("duration", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+export const responsibleGaming = mysqlTable("responsible_gaming", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 255 }).notNull(),
   icon: varchar("icon", { length: 500 }).notNull(),

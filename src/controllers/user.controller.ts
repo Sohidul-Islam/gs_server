@@ -254,18 +254,14 @@ export const userProfile = async (req: Request, res: Response): Promise<void> =>
 
   const user = (req as unknown as {user: JwtPayload}).user;
 
-  if (!user || user.userType==="user") {
-    res.status(401).json({ status: false, message: "Unauthorized" });
-    return;
-  }
-
-  if(!user.id){
+  if(!Boolean(user.id) || user.userType!=="user"){
+    
     res.status(401).json({ status: false, message: "Unauthorized" });
     return;
   }
 
   try {
-    const userData = await getUserById(user.id);
+    const userData = await getUserById(user?.id!);
 
     if (userData?.id) {
       if (userData.status === "active") {

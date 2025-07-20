@@ -91,7 +91,7 @@ export const adminRegistration = async (
       currency,
       createdBy,
       status,
-      refCode,
+      refer_code,
     } = req.body;
 
     const userData = (req as unknown as { user: DecodedUser | null })?.user;
@@ -163,8 +163,8 @@ export const adminRegistration = async (
     const uniqueRefCode = await generateUniqueRefCode("admin");
     // If refCode is provided, find the referring admin
     let referred_by = undefined;
-    if (refCode) {
-      const referringAdmin = await findAdminByRefCode(refCode);
+    if (refer_code) {
+      const referringAdmin = await findAdminByRefCode(refer_code);
       if (referringAdmin && referringAdmin.id) {
         referred_by = referringAdmin.id;
       }

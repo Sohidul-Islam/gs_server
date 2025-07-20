@@ -183,7 +183,7 @@ export const adminRegistration = async (
       minTrx: minTrx !== undefined ? String(minTrx) : undefined,
       maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
       currency,
-      createdBy: Number(createdByData),
+      createdBy: Number(createdByData)||undefined,
       refCode: uniqueRefCode,
       status,
       referred_by,

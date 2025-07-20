@@ -34,6 +34,7 @@ export const createUser = async (data: {
   createdBy?: number;
   referred_by?: number;
   referred_by_admin_user?: number;
+  status: "active"|"inactive";
 }) => {
   // const hashedPassword = await bcrypt.hash(data.password, 10);
   const [user] = await db.insert(users).values({

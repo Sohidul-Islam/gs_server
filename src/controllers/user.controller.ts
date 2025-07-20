@@ -94,6 +94,7 @@ export const registerUser = async (req: Request, res: Response) => {
       createdBy,
       referred_by,
       referred_by_admin_user,
+      status:"active"
     });
     return res.status(201).json({
       status: true,

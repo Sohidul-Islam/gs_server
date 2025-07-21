@@ -36,7 +36,7 @@ import {
   website_popups,
 } from "../db/schema";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
-import { verifyJwt } from "../utils/jwt";
+import { generateJwtToken, verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
 import { DecodedUser } from "../middlewares/verifyToken";
@@ -97,7 +97,7 @@ export const adminRegistration = async (
       currency,
       createdBy,
       status,
-      refCode,
+      refer_code,
     } = req.body;
 
     const userData = (req as unknown as { user: DecodedUser | null })?.user;
@@ -169,8 +169,8 @@ export const adminRegistration = async (
     const uniqueRefCode = await generateUniqueRefCode("admin");
     // If refCode is provided, find the referring admin
     let referred_by = undefined;
-    if (refCode) {
-      const referringAdmin = await findAdminByRefCode(refCode);
+    if (refer_code) {
+      const referringAdmin = await findAdminByRefCode(refer_code);
       if (referringAdmin && referringAdmin.id) {
         referred_by = referringAdmin.id;
       }
@@ -189,7 +189,7 @@ export const adminRegistration = async (
       minTrx: minTrx !== undefined ? String(minTrx) : undefined,
       maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
       currency,
-      createdBy: Number(createdByData),
+      createdBy: Number(createdByData)||undefined,
       refCode: uniqueRefCode,
       status,
       referred_by,
@@ -265,16 +265,14 @@ export const adminLogin = async (
         })
         .where(eq(adminUsers.id, admin.id));
 
-    const token = jwt.sign(
-      {
-        id: admin.id,
-        email: admin.email,
-        username: admin.username,
-        role: admin.role,
-      },
-      process.env.JWT_SECRET || "your_jwt_secret",
-      { expiresIn: "1h" }
-    );
+    const token = generateJwtToken({
+      id: admin.id,
+      email: admin.email,
+      username: admin.username,
+      role: admin.role,
+      userType: "admin",
+    });
+    
     res.json({
       status: true,
       message: "Login successful",

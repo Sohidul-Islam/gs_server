@@ -5,7 +5,9 @@ import {
   loginUser,
   updateUser,
   deleteUser,
+  userProfile,
 } from "../controllers/user.controller";
+import { verifyToken } from "../middlewares/verifyToken";
 
 const router = Router();
 
@@ -18,7 +20,12 @@ router.post("/register", (req, res, next) => {
 });
 
 router.post("/login", (req, res, next) => {
+  console.log("hit login page...")
   loginUser(req, res).catch(next);
+});
+
+router.get("/profile", verifyToken, (req, res, next) => {
+  userProfile(req, res).catch(next);
 });
 
 router.post("/update/:id", (req, res, next) => {

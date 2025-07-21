@@ -112,11 +112,14 @@ const seedCountryData = async () => {
       flagUrl: any;
       currencyId: Number;
       status: String;
+      code: string;
     }
   >();
 
   for (const country of countryData) {
-    const { name, currency } = country;
+    const { name, currency ,isoAlpha2} = country;
+
+    console.log({isoAlpha2})
 
     const [currencyData] = await db
       .select()
@@ -128,6 +131,7 @@ const seedCountryData = async () => {
         name: name,
         flagUrl: country?.flag || "",
         currencyId: Number(currencyData?.id),
+        code: isoAlpha2,
         status: "active" as "active",
       });
     }
@@ -142,12 +146,14 @@ const seedCountryData = async () => {
         name: String(c.name),
         flagUrl: String(c.flagUrl || ""),
         currencyId: Number(c.currencyId) || null,
+        code: c.code,
         status: "active" as "active",
       }))
     )
     .onDuplicateKeyUpdate({
       set: {
         name: sql`values(${countries.name})`,
+        code: sql`values(${countries.code})`,
       },
     });
 

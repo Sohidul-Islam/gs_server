@@ -8,3 +8,4 @@ export * from "./schema/dropdowns";
 export * from "./schema/promotions";
 export * from "./schema/cms";
 export * from "./schema/accounts";
+export * from './schema/paymentMethods'

@@ -57,16 +57,20 @@ router.get("/profile", verifyToken, asyncHandler(adminProfile));
 router.get("/players", verifyToken, asyncHandler(getPlayers));
 router.get("/admins", verifyToken, asyncHandler(getAdmins));
 router.get("/agents", verifyToken, asyncHandler(getAgents));
+
 router.get("/affiliates", verifyToken, asyncHandler(getAffiliates));
 
 // configuration
 router.post("/create-dropdowns", verifyToken, asyncHandler(addDropdownOption));
+
 router.post(
   "/update-dropdown-option-status/:id",
   verifyToken,
   asyncHandler(updateDropdownOptionStatus)
 );
+
 router.get("/get-dropdowns", verifyToken, asyncHandler(getDropdownsList));
+
 router.get(
   "/dropdown-options",
   verifyToken,
@@ -85,6 +89,7 @@ router.post("/delete/:id", verifyToken, asyncHandler(deleteAdmin));
 
 // cms
 router.post("/banner", verifyToken, asyncHandler(createUpdateBanners));
+// banner
 router.get("/get-banner", verifyToken, asyncHandler(getAllBanners));
 
 router.post(
@@ -92,6 +97,7 @@ router.post(
   verifyToken,
   asyncHandler(createOrUpdateAnnouncement)
 );
+
 router.get(
   "/get-announcements",
   verifyToken,

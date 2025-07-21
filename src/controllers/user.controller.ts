@@ -5,9 +5,10 @@ import {
   findUserByUsernameOrEmail,
   updateUser as updateUserModel,
   deleteUser as deleteUserModel,
+  getUserById,
 } from "../models/user.model";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+
 import * as UAParser from "ua-parser-js";
 import { db } from "../db/connection";
 import { users } from "../db/schema";
@@ -15,6 +16,7 @@ import { eq } from "drizzle-orm";
 import { generateUniqueRefCode } from "../utils/refCode";
 import { findUserByReferCode } from "../models/user.model";
 import { findAdminByRefCode } from "../models/admin.model";
+import { generateJwtToken, JwtPayload, verifyJwt } from "../utils/jwt";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -26,6 +28,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
       .json({ status: false, message: "Failed to fetch users" });
   }
 };
+
+
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -90,6 +94,7 @@ export const registerUser = async (req: Request, res: Response) => {
       createdBy,
       referred_by,
       referred_by_admin_user,
+      status:"active"
     });
     return res.status(201).json({
       status: true,
@@ -156,11 +161,12 @@ export const loginUser = async (req: Request, res: Response) => {
     const browser_version = uaResult.browser.version || "Unknown";
     const ip_address = getClientIp(req);
     // You can now use device_type, device_name, os_version, browser, browser_version, ip_address as needed (e.g., log, save to DB, etc.)
-    const token = jwt.sign(
-      { id: user.id, email: user.email, username: user.username },
-      process.env.JWT_SECRET || "your_jwt_secret",
-      { expiresIn: "1h" }
-    );
+    const token = generateJwtToken({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      userType: "user",
+    });
 
     await db
       .update(users)
@@ -241,5 +247,50 @@ export const deleteUser = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ status: false, message: "Failed to delete user" });
+  }
+};
+
+export const userProfile = async (req: Request, res: Response): Promise<void> => {
+
+
+  const user = (req as unknown as {user: JwtPayload}).user;
+
+  if(!Boolean(user.id) || user.userType!=="user"){
+    
+    res.status(401).json({ status: false, message: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const userData = await getUserById(user?.id!);
+
+    if (userData?.id) {
+      if (userData.status === "active") {
+        res.status(200).json({
+          status: true,
+          message: "Profile fetched successfully",
+          data: userData,
+        });
+      } else {
+        res.status(401).json({
+          status: false,
+          message: "User is inactive",
+          data: null,
+        });
+      }
+    } else {
+      res.status(200).json({
+        status: false,
+        message: "Profile not found",
+        data: userData,
+      });
+      return;
+    }
+  } catch (error) {
+    if (!res.headersSent) {
+      res
+        .status(200)
+        .json({ message: "Something went wrong", status: false, error });
+    }
   }
 };

@@ -14,7 +14,7 @@ import publicRouter from "./routes/public.route";
 import adminRouter from "./routes/admin.route";
 import countryRouter from "./routes/country.route";
 import accountRoutes from "./routes/account.route";
-import paymentMethodTypeRouter from "./routes/paymentMethodType.route";
+import paymentMethodTypeRouter from "./routes/paymentMethods.route";
 import { errorHandler } from "./middlewares/errorHandler";
 import { setupSwagger } from "./utils/swagger";
 // Ensure process.env.DATABASE_URL is defined and of correct type

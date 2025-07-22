@@ -7,7 +7,7 @@ import { seedAdminUsers } from "./seed-fn/adminUser";
 import { seedDropdowns } from "./seed-fn/dropdowns";
 import { seedAccountTypes } from "./seed-fn/accountTypes";
 import { seedAccounts } from "./seed-fn/accounts";
-import { seedPaymentMethodTypes } from "./seed-fn/paymentMethods";
+import { seedPaymentMethods, seedPaymentMethodTypes } from "./seed-fn/paymentMethods";
 
 async function seed() {
   try {
@@ -23,6 +23,8 @@ async function seed() {
     await seedAccounts(db);
     // seed dropdown names
     await seedDropdowns();
+    
+    await seedPaymentMethods()
     
     await seedPaymentMethodTypes()
   } catch (error) {

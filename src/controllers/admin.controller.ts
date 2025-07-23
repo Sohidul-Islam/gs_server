@@ -189,7 +189,7 @@ export const adminRegistration = async (
       minTrx: minTrx !== undefined ? String(minTrx) : undefined,
       maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
       currency,
-      createdBy: Number(createdByData)||undefined,
+      createdBy: Number(createdByData) || undefined,
       refCode: uniqueRefCode,
       status,
       referred_by,
@@ -272,7 +272,7 @@ export const adminLogin = async (
       role: admin.role,
       userType: "admin",
     });
-    
+
     res.json({
       status: true,
       message: "Login successful",
@@ -1042,12 +1042,12 @@ export const createOrUpdateAnnouncement = async (
   res: Response
 ) => {
   try {
-    const { id, message, status, title, dateRange } = req.body;
+    const { id, description, status, title, dateRange } = req.body;
 
-    if (!message || typeof message !== "string") {
+    if (!description || typeof description !== "string") {
       return res.status(400).json({
         status: false,
-        message: "Announcement message is required.",
+        message: "Announcement description is required.",
       });
     }
 
@@ -1071,7 +1071,7 @@ export const createOrUpdateAnnouncement = async (
       // Update the specific announcement
       await db
         .update(announcements)
-        .set({ message, status: validatedStatus })
+        .set({ description, status: validatedStatus })
         .where(eq(announcements.id, id));
 
       return res.status(200).json({
@@ -1095,7 +1095,7 @@ export const createOrUpdateAnnouncement = async (
 
       // Create new announcement
       await db.insert(announcements).values({
-        message,
+        description,
         status: validatedStatus,
         title: finalTitle || "",
         dateRange: dateRange,
@@ -1661,11 +1661,6 @@ export const createOrUpdateGamingLicenses = async (
         .status(400)
         .json({ status: false, message: "Gaming license icon is required." });
     }
-    if (!duration || typeof duration !== "string") {
-      return res
-        .status(400)
-        .json({ status: false, message: "Duration is required." });
-    }
 
     const validatedStatus = status === "active" ? "active" : "inactive";
 
@@ -1774,11 +1769,6 @@ export const createOrUpdateResponsibleGaming = async (
         status: false,
         message: "Responsible gaming icon is required.",
       });
-    }
-    if (!duration || typeof duration !== "string") {
-      return res
-        .status(400)
-        .json({ status: false, message: "Duration is required." });
     }
 
     const validatedStatus = status === "active" ? "active" : "inactive";

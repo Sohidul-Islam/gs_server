@@ -21,7 +21,7 @@ export const banners = mysqlTable("hero_banners", {
 export const announcements = mysqlTable("announcements", {
   id: int("id").primaryKey().autoincrement(),
   title: varchar("title", { length: 255 }).notNull(),
-  message: varchar("message", { length: 1500 }).notNull(),
+  description: varchar("description", { length: 1500 }).notNull(),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
   dateRange: varchar("date_range", { length: 255 }),
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
@@ -67,7 +67,7 @@ export const gamingLicenses = mysqlTable("gaming_licenses", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 255 }).notNull(),
   icon: varchar("icon", { length: 500 }).notNull(),
-  duration: varchar("duration", { length: 255 }).notNull(),
+  duration: varchar("duration", { length: 255 }),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
@@ -75,7 +75,7 @@ export const responsibleGaming = mysqlTable("responsible_gaming", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 255 }).notNull(),
   icon: varchar("icon", { length: 500 }).notNull(),
-  duration: varchar("duration", { length: 255 }).notNull(),
+  duration: varchar("duration", { length: 255 }),
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });

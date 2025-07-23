@@ -2,7 +2,7 @@ import { db } from "../db/connection";
 import { paymentMethods } from "../db/schema/paymentMethods";
 import { sql } from "drizzle-orm";
 
-export const PaymentMethodTypeModel = {
+export const PaymentMethodModel = {
   async getAll() {
     return db.select().from(paymentMethods);
   },

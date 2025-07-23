@@ -5,7 +5,7 @@ import {
   createPaymentMethodType,
   updatePaymentMethodType,
   deletePaymentMethodType,
-} from "../controllers/paymentMethodType.controller";
+} from "../controllers/paymentMethods.controller";
 import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();

@@ -44,6 +44,10 @@ export const adminUsers = mysqlTable("admin_users", {
 
   lastIp: varchar("last_ip", { length: 120 }),
   lastLogin: datetime("last_login"),
+  commission_percent: int("commission_percent"),
+  main_balance: int("main_balance").default(0),
+  downline_balance: int("downline_balance").default(0),
+  withdrawable_balance: int("withdrawable_balance").default(0),
 
   // ✅ Device info fields
   device_type: varchar("device_type", { length: 50 }),

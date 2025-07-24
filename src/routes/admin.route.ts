@@ -42,6 +42,7 @@ import {
   createOrUpdateResponsibleGaming,
   getAllResponsibleGaming,
   deleteResponsibleGaming,
+  getSubAffiliatesListByAffiliateId,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -59,6 +60,11 @@ router.get("/admins", verifyToken, asyncHandler(getAdmins));
 router.get("/agents", verifyToken, asyncHandler(getAgents));
 
 router.get("/affiliates", verifyToken, asyncHandler(getAffiliates));
+router.get(
+  "/affiliates/:id/sub-affiliates-list",
+  verifyToken,
+  asyncHandler(getSubAffiliatesListByAffiliateId)
+);
 
 // configuration
 router.post("/create-dropdowns", verifyToken, asyncHandler(addDropdownOption));

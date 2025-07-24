@@ -1,19 +1,19 @@
 import { Router } from "express";
 import {
-  getAllPaymentMethodTypes,
-  getPaymentMethodTypeById,
-  createPaymentMethodType,
-  updatePaymentMethodType,
-  deletePaymentMethodType,
+  getAllPaymentMethod,
+  getPaymentMethodById,
+  createPaymentMethod,
+  updatePaymentMethod,
+  deletePaymentMethod,
 } from "../controllers/paymentMethods.controller";
 import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-router.get("/", asyncHandler(getAllPaymentMethodTypes));
-router.get("/:id", asyncHandler(getPaymentMethodTypeById));
-router.post("/", asyncHandler(createPaymentMethodType));
-router.put("/:id", asyncHandler(updatePaymentMethodType));
-router.delete("/:id", asyncHandler(deletePaymentMethodType));
+router.get("/", asyncHandler(getAllPaymentMethod));
+router.get("/:id", asyncHandler(getPaymentMethodById));
+router.post("/", asyncHandler(createPaymentMethod));
+router.put("/:id", asyncHandler(updatePaymentMethod));
+router.delete("/:id", asyncHandler(deletePaymentMethod));
 
-export default router; 
+export default router;

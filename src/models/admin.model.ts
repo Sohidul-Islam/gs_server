@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import {
   adminUsers,
   announcements,
+  currencies,
   dropdownOptions,
   dropdowns,
   promotions,
@@ -45,6 +46,7 @@ export const createAdmin = async (data: {
   status?: "active" | "inactive";
   refCode?: string;
   referred_by?: number;
+  commission_percent: number;
 }) => {
   const [admin] = await db.insert(adminUsers).values({
     ...data,
@@ -59,9 +61,28 @@ export const getAdminById = async (id: number) => {
     .select()
     .from(adminUsers)
     .where(eq(adminUsers.id, id));
-  return admin;
-};
 
+  if (!admin) return null;
+
+  let currencyInfo = null;
+
+  // If admin has a currencyId, fetch the currency info
+  if (admin?.currency) {
+    const [currencyData] = await db
+      .select()
+      .from(currencies)
+      .where(eq(currencies.id, admin.currency));
+
+    if (currencyData) {
+      currencyInfo = currencyData;
+    }
+  }
+
+  return {
+    ...admin,
+    currencyInfo: currencyInfo,
+  };
+};
 export type AdminRole =
   | "admin"
   | "superAgent"

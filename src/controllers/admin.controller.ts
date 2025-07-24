@@ -35,7 +35,7 @@ import {
   video_advertisement,
   website_popups,
 } from "../db/schema";
-import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { generateJwtToken, verifyJwt } from "../utils/jwt";
 import { getUsersWithFilters } from "../models/user.model";
 import * as UAParser from "ua-parser-js";
@@ -98,6 +98,7 @@ export const adminRegistration = async (
       createdBy,
       status,
       refer_code,
+      commission_percent,
     } = req.body;
 
     const userData = (req as unknown as { user: DecodedUser | null })?.user;
@@ -189,10 +190,11 @@ export const adminRegistration = async (
       minTrx: minTrx !== undefined ? String(minTrx) : undefined,
       maxTrx: maxTrx !== undefined ? String(maxTrx) : undefined,
       currency,
-      createdBy: Number(createdByData)||undefined,
+      createdBy: Number(createdByData) || undefined,
       refCode: uniqueRefCode,
       status,
       referred_by,
+      commission_percent,
     });
     res.status(201).json({
       status: true,
@@ -272,7 +274,7 @@ export const adminLogin = async (
       role: admin.role,
       userType: "admin",
     });
-    
+
     res.json({
       status: true,
       message: "Login successful",
@@ -480,7 +482,19 @@ export const getAgents = async (req: Request, res: Response) => {
 
 export const getAffiliates = async (req: Request, res: Response) => {
   try {
-    let { role, page = 1, pageSize = 10, keyword, status } = req.query;
+    let { id, role, page = 1, pageSize = 10, keyword, status } = req.query;
+
+    if (id) {
+      const affiliate = await getAdminById(Number(id));
+      if (!affiliate) {
+        return res.status(404).json({
+          status: false,
+          message: "Affiliate not found",
+        });
+      }
+      return res.json({ status: true, data: affiliate });
+    }
+
     let roles: ("superAffiliate" | "affiliate")[] = [
       "superAffiliate",
       "affiliate",
@@ -524,6 +538,80 @@ export const getAffiliates = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch affiliates", error });
+  }
+};
+export const getSubAffiliatesListByAffiliateId = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const affiliateId = Number(req.params.id);
+    if (isNaN(affiliateId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid affiliate ID",
+      });
+    }
+
+    const { page = 1, pageSize = 10, status } = req.query;
+
+    const currentPage = Math.max(Number(page), 1);
+    const limit = Math.max(Number(pageSize), 1);
+    const offset = (currentPage - 1) * limit;
+
+    const validStatuses = ["active", "inactive"];
+    const statusFilter =
+      status && validStatuses.includes(status as string)
+        ? (status as "active" | "inactive")
+        : undefined;
+
+    const whereClauses = [
+      or(
+        eq(adminUsers.createdBy, affiliateId),
+        eq(adminUsers.referred_by, affiliateId)
+      ),
+    ];
+
+    if (statusFilter) {
+      whereClauses.push(eq(adminUsers.status, statusFilter));
+    }
+
+    const where = and(...whereClauses);
+
+    // Get total count
+    const total = await db
+      .select({ count: sql`COUNT(*)` })
+      .from(adminUsers)
+      .where(where)
+      .then((rows) => Number(rows[0]?.count || 0));
+
+    // Get paginated data
+    const data = await db
+      .select()
+      .from(adminUsers)
+      .where(where)
+      .limit(limit)
+      .offset(offset);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return res.json({
+      status: true,
+      data,
+      pagination: {
+        page: currentPage,
+        pageSize: limit,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching sub-affiliates:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Failed to fetch sub-affiliates",
+      error,
+    });
   }
 };
 
@@ -1042,12 +1130,12 @@ export const createOrUpdateAnnouncement = async (
   res: Response
 ) => {
   try {
-    const { id, message, status, title, dateRange } = req.body;
+    const { id, description, status, title, dateRange } = req.body;
 
-    if (!message || typeof message !== "string") {
+    if (!description || typeof description !== "string") {
       return res.status(400).json({
         status: false,
-        message: "Announcement message is required.",
+        message: "Announcement description is required.",
       });
     }
 
@@ -1071,7 +1159,7 @@ export const createOrUpdateAnnouncement = async (
       // Update the specific announcement
       await db
         .update(announcements)
-        .set({ message, status: validatedStatus })
+        .set({ description, status: validatedStatus })
         .where(eq(announcements.id, id));
 
       return res.status(200).json({
@@ -1095,7 +1183,7 @@ export const createOrUpdateAnnouncement = async (
 
       // Create new announcement
       await db.insert(announcements).values({
-        message,
+        description,
         status: validatedStatus,
         title: finalTitle || "",
         dateRange: dateRange,
@@ -1661,11 +1749,6 @@ export const createOrUpdateGamingLicenses = async (
         .status(400)
         .json({ status: false, message: "Gaming license icon is required." });
     }
-    if (!duration || typeof duration !== "string") {
-      return res
-        .status(400)
-        .json({ status: false, message: "Duration is required." });
-    }
 
     const validatedStatus = status === "active" ? "active" : "inactive";
 
@@ -1774,11 +1857,6 @@ export const createOrUpdateResponsibleGaming = async (
         status: false,
         message: "Responsible gaming icon is required.",
       });
-    }
-    if (!duration || typeof duration !== "string") {
-      return res
-        .status(400)
-        .json({ status: false, message: "Duration is required." });
     }
 
     const validatedStatus = status === "active" ? "active" : "inactive";

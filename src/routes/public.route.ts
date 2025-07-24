@@ -6,6 +6,7 @@ import {
   getActivePopup,
   getActiveResponsibleGaming,
   getActiveSponsor,
+  getActiveUtils,
   getActiveVideoAdvertisement,
   getPublicActiveBannerImages,
   getPublicPromotionList,
@@ -23,5 +24,6 @@ router.get("/sponsors", asyncHandler(getActiveSponsor));
 router.get("/ambassador", asyncHandler(getActiveAmbassador));
 router.get("/gaming-licenses", asyncHandler(getActiveGamingLicenses));
 router.get("/responsible-gamings", asyncHandler(getActiveResponsibleGaming));
+router.get("/active-utils", asyncHandler(getActiveUtils));
 
 export default router;

@@ -185,8 +185,7 @@ export const getActiveSponsor = async (req: Request, res: Response) => {
     const activeSponsor = await db
       .select()
       .from(sponsors)
-      .where(eq(sponsors.status, "active"))
-      .limit(1);
+      .where(eq(sponsors.status, "active"));
 
     if (activeSponsor.length === 0) {
       return res.status(404).json({
@@ -213,8 +212,7 @@ export const getActiveAmbassador = async (req: Request, res: Response) => {
     const activeAmbassador = await db
       .select()
       .from(ambassadors)
-      .where(eq(ambassadors.status, "active"))
-      .limit(1);
+      .where(eq(ambassadors.status, "active"));
 
     if (activeAmbassador.length === 0) {
       return res.status(404).json({
@@ -241,8 +239,7 @@ export const getActiveGamingLicenses = async (req: Request, res: Response) => {
     const activeGamingLicense = await db
       .select()
       .from(gamingLicenses)
-      .where(eq(gamingLicenses.status, "active"))
-      .limit(1);
+      .where(eq(gamingLicenses.status, "active"));
 
     if (activeGamingLicense.length === 0) {
       return res.status(404).json({
@@ -272,8 +269,7 @@ export const getActiveResponsibleGaming = async (
     const activeResponsibleGaming = await db
       .select()
       .from(responsibleGaming)
-      .where(eq(responsibleGaming.status, "active"))
-      .limit(1);
+      .where(eq(responsibleGaming.status, "active"));
 
     if (activeResponsibleGaming.length === 0) {
       return res.status(404).json({
@@ -289,6 +285,83 @@ export const getActiveResponsibleGaming = async (
     });
   } catch (error) {
     console.error("Error fetching active responsible gaming:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error.",
+    });
+  }
+};
+
+export const getActiveUtils = async (req: Request, res: Response) => {
+  try {
+    const [
+      popup,
+      responsible_gamings,
+      bannersData,
+      announcementData,
+      advertisement,
+      sponsorsData,
+      ambassadorData,
+      gamingLicensesData,
+    ] = await Promise.all([
+      db
+        .select()
+        .from(website_popups)
+        .where(eq(website_popups.status, "active"))
+        .limit(1),
+      db
+        .select()
+        .from(responsibleGaming)
+        .where(eq(responsibleGaming.status, "active")),
+      db
+        .select()
+        .from(banners)
+        .where(eq(banners.status, "active"))
+        .orderBy(desc(banners.id)),
+      db
+        .select()
+        .from(announcements)
+        .where(eq(announcements.status, "active"))
+        .limit(1),
+      db
+        .select()
+        .from(video_advertisement)
+        .where(eq(video_advertisement.status, "active"))
+        .limit(1),
+      db.select().from(sponsors).where(eq(sponsors.status, "active")),
+      db.select().from(ambassadors).where(eq(ambassadors.status, "active")),
+      db
+        .select()
+        .from(gamingLicenses)
+        .where(eq(gamingLicenses.status, "active")),
+    ]);
+
+    // parse images in banners
+    const banner_images = bannersData.flatMap((banner) => {
+      try {
+        const images = JSON.parse(banner.images);
+        return Array.isArray(images) ? images : [];
+      } catch {
+        return [];
+      }
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: "All active utils fetched successfully.",
+      data: {
+        popup: popup[0] || null,
+        responsible_gamings,
+        banners: banner_images,
+        announcement: announcementData[0] || null,
+        advertisement: advertisement[0] || null,
+        sponsors: sponsorsData,
+        ambassador: ambassadorData,
+        gaming_licenses: gamingLicensesData,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching active utils:", error);
     return res.status(500).json({
       status: false,
       message: "Server error.",

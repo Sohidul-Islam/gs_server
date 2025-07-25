@@ -1,11 +1,4 @@
-import {
-  mysqlTable,
-  int,
-  varchar,
-  double,
-  mysqlEnum,
-  json,
-} from "drizzle-orm/mysql-core";
+import { mysqlTable, int, varchar, double, json } from "drizzle-orm/mysql-core";
 import { ActivityStatus } from "./users";
 
 export const paymentGateway = mysqlTable("payment_gateway", {

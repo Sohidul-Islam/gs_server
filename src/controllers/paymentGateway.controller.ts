@@ -8,8 +8,8 @@ function buildWhereCondition(query: any) {
   const whereCondition = [];
   if (query.status)
     whereCondition.push(eq(paymentGateway.status, query.status));
-  if (query.countryCode)
-    whereCondition.push(eq(paymentGateway.countryCode, query.countryCode));
+  if (query.countryId)
+    whereCondition.push(eq(paymentGateway.countryId, query.countryCode));
   if (query.methodId)
     whereCondition.push(eq(paymentGateway.methodId, Number(query.methodId)));
   if (query.name)

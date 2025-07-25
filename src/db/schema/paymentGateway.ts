@@ -11,10 +11,11 @@ export const paymentGateway = mysqlTable("payment_gateway", {
   minWithdraw: double("min_withdraw"),
   maxWithdraw: double("max_withdraw"),
   status: ActivityStatus.default("active"),
-  countryCode: varchar("country_code", { length: 10 }),
+  countryId: int("country_code"),
   network: varchar("network", { length: 100 }),
   currencyConversionRate: double("currency_conversion_rate"),
-  name: varchar("name", { length: 100 }).notNull(),
+  name: varchar("name", { length: 100 }).unique().notNull(),
 });
 
-export const PaymentGateway = paymentGateway.$inferInsert;
+export const NewPaymentGateway = paymentGateway.$inferInsert;
+export const PaymentGateway = paymentGateway.$inferSelect;

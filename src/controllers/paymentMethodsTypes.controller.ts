@@ -1,9 +1,19 @@
 import { Request, Response } from "express";
 import { PaymentMethodTypesModel } from "../models/paymentMethodsTypes.model";
 
-
 export const getAllPaymentMethodTypes = async (req: Request, res: Response) => {
-  const types = await PaymentMethodTypesModel.getAll();
+  let status: "active" | "inactive" | undefined;
+  if (
+    typeof req.query.status === "string" &&
+    (req.query.status === "active" || req.query.status === "inactive")
+  ) {
+    status = req.query.status;
+  }
+  const filter: { status?: "active" | "inactive" } = {};
+  if (status) {
+    filter.status = status;
+  }
+  const types = await PaymentMethodTypesModel.getAll(filter);
   res.json(types);
 };
 
@@ -17,7 +27,10 @@ export const getPaymentMethodTypeById = async (req: Request, res: Response) => {
 
 export const createPaymentMethodType = async (req: Request, res: Response) => {
   const { name, paymentMethodId } = req.body;
-  await PaymentMethodTypesModel.create({ name,paymentMethodId: Number(paymentMethodId) });
+  await PaymentMethodTypesModel.create({
+    name,
+    paymentMethodId: Number(paymentMethodId),
+  });
   res.status(201).json({ message: "Created" });
 };
 
@@ -32,4 +45,4 @@ export const deletePaymentMethodType = async (req: Request, res: Response) => {
   const { id } = req.params;
   await PaymentMethodTypesModel.delete(Number(id));
   res.json({ message: "Deleted" });
-}; 
+};

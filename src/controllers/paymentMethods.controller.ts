@@ -2,7 +2,18 @@ import { Request, Response } from "express";
 import { PaymentMethodModel } from "../models/paymentMethods.model";
 
 export const getAllPaymentMethod = async (req: Request, res: Response) => {
-  const types = await PaymentMethodModel.getAll();
+  let status: "active" | "inactive" | undefined;
+  if (
+    typeof req.query.status === "string" &&
+    (req.query.status === "active" || req.query.status === "inactive")
+  ) {
+    status = req.query.status;
+  }
+  const filter: { status?: "active" | "inactive" } = {};
+  if (status) {
+    filter.status = status;
+  }
+  const types = await PaymentMethodModel.getAll(filter);
   res.json(types);
 };
 

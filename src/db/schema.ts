@@ -10,3 +10,4 @@ export * from "./schema/cms";
 export * from "./schema/accounts";
 export * from "./schema/paymentMethods";
 export * from "./schema/paymentMethodTypes";
+export * from "./schema/paymentGateway";

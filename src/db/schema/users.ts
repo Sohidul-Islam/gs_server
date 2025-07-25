@@ -13,6 +13,8 @@ import { relations, sql } from "drizzle-orm";
 import { adminUsers } from "./AdminUsers";
 import { currencies } from "./currency";
 
+export const ActivityStatus = mysqlEnum("status", ["active", "inactive"]);
+
 export const users = mysqlTable("users", {
   id: int("id").primaryKey().autoincrement(),
   username: varchar("username", { length: 50 }),
@@ -23,7 +25,7 @@ export const users = mysqlTable("users", {
   currency_id: int("currency_id"),
   refer_code: varchar("refer_code", { length: 50 }),
   created_by: int("created_by"),
-  status: mysqlEnum("status", ["active", "inactive"]),
+  status: ActivityStatus,
   isAgreeWithTerms: boolean("isAgreeWithTerms"),
   isLoggedIn: boolean("is_logged_in").default(false),
   isVerified: boolean("is_verified").default(false),

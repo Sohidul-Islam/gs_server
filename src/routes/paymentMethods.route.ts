@@ -13,7 +13,7 @@ const router = Router();
 router.get("/", asyncHandler(getAllPaymentMethod));
 router.get("/:id", asyncHandler(getPaymentMethodById));
 router.post("/", asyncHandler(createPaymentMethod));
-router.put("/:id", asyncHandler(updatePaymentMethod));
-router.delete("/:id", asyncHandler(deletePaymentMethod));
+router.post("/update/:id", asyncHandler(updatePaymentMethod));
+router.delete("/delete/:id", asyncHandler(deletePaymentMethod));
 
 export default router;

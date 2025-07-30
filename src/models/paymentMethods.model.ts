@@ -20,7 +20,10 @@ export const PaymentMethodModel = {
   async create(data: { name: string }) {
     return db.insert(paymentMethods).values(data);
   },
-  async update(id: number, data: { name: string }) {
+  async update(
+    id: number,
+    data: { name: string; status: "active" | "inactive" }
+  ) {
     return db
       .update(paymentMethods)
       .set(data)

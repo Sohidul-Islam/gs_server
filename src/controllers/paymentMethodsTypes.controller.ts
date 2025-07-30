@@ -36,8 +36,8 @@ export const createPaymentMethodType = async (req: Request, res: Response) => {
 
 export const updatePaymentMethodType = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name } = req.body;
-  await PaymentMethodTypesModel.update(Number(id), { name });
+  const { name, status } = req.body;
+  await PaymentMethodTypesModel.update(Number(id), { name, status });
   res.json({ message: "Updated" });
 };
 

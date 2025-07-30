@@ -24,7 +24,6 @@ export const getAllPaymentGateways = async (req: Request, res: Response) => {
     const pageSize = parseInt((req.query.pageSize as string) || "10", 10);
     const page = parseInt((req.query.page as string) || "1", 10);
     const filter = req.query;
-    const whereCondition = buildWhereCondition(filter);
 
     // Get all filtered
     const allRows = await PaymentGatewayModel.getAll(filter);

@@ -10,9 +10,12 @@ router.get(
   asyncHandler(paymentGatewayController.getPaymentGatewayById)
 );
 router.post("/", asyncHandler(paymentGatewayController.createPaymentGateway));
-router.put("/:id", asyncHandler(paymentGatewayController.updatePaymentGateway));
-router.delete(
-  "/:id",
+router.post(
+  "/update/:id",
+  asyncHandler(paymentGatewayController.updatePaymentGateway)
+);
+router.post(
+  "/delete/:id",
   asyncHandler(paymentGatewayController.deletePaymentGateway)
 );
 

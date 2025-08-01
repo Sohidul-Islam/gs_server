@@ -36,10 +36,11 @@ export const PaymentGatewayModel = {
   async create(data: typeof NewPaymentGateway) {
     // Validate methodId
     const method = await PaymentMethodModel.getById(data.methodId);
+
     if (!method || method.length === 0) {
       throw new Error("Invalid payment method id");
     }
-
+    console.log("test");
     // Validate paymentMethodTypeIds (array of numbers)
     if (!Array.isArray(data.paymentMethodTypeIds)) {
       throw new Error("paymentMethodTypeIds must be an array of numbers");

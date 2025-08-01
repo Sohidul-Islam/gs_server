@@ -12,10 +12,7 @@ export const PaymentMethodModel = {
       );
   },
   async getById(id: number) {
-    return db
-      .select()
-      .from(paymentMethods)
-      .where(sql`${paymentMethods.id} = ${id}`);
+    return db.select().from(paymentMethods).where(eq(paymentMethods.id, id));
   },
   async create(data: { name: string }) {
     return db.insert(paymentMethods).values(data);

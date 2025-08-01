@@ -171,3 +171,54 @@ Invalid pagination parameters will be handled gracefully:
 - Total count queries are optimized
 - Results are ordered by ID for consistent pagination
 - Gateway-provider relationships are ordered by priority first, then by ID
+
+## Status Update API
+
+### PUT `/api/gateway-providers/:id/status`
+
+Update the status of a gateway-provider relationship.
+
+**Request Body:**
+
+```json
+{
+  "status": "active"
+}
+```
+
+**Valid Status Values:**
+
+- `"active"` - Enable the relationship
+- `"inactive"` - Disable the relationship
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "gatewayId": 1,
+    "providerId": 1,
+    "priority": 1,
+    "status": "active"
+  },
+  "message": "Status updated to active successfully"
+}
+```
+
+**Usage Examples:**
+
+```bash
+# Activate a relationship
+PUT /api/gateway-providers/1/status
+{
+  "status": "active"
+}
+
+# Deactivate a relationship
+PUT /api/gateway-providers/1/status
+{
+  "status": "inactive"
+}
+```

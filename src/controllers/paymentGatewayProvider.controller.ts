@@ -152,6 +152,41 @@ export const PaymentGatewayProviderController = {
     });
   }),
 
+  // Update relationship status
+  updateStatus: asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate status
+    if (!status || !["active", "inactive"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be 'active' or 'inactive'",
+      });
+    }
+
+    const existingRelationship = await PaymentGatewayProviderModel.getAll({
+      id: Number(id),
+    });
+    if (!existingRelationship || existingRelationship.data.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Gateway-provider relationship not found",
+      });
+    }
+
+    const updatedRelationship = await PaymentGatewayProviderModel.update(
+      Number(id),
+      { status }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: updatedRelationship,
+      message: `Status updated to ${status} successfully`,
+    });
+  }),
+
   // Remove provider from gateway
   removeProviderFromGateway: asyncHandler(
     async (req: Request, res: Response) => {

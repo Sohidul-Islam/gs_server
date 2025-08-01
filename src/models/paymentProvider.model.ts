@@ -21,10 +21,37 @@ export const PaymentProviderModel = {
         )
       );
 
-    return db
-      .select()
+    // Pagination parameters
+    const page = parseInt(filter.page as string) || 1;
+    const pageSize = parseInt(filter.pageSize as string) || 10;
+    const offset = (page - 1) * pageSize;
+
+    // Get total count for pagination
+    const totalCount = await db
+      .select({ count: sql<number>`count(*)` })
       .from(paymentProvider)
       .where(whereCondition.length ? and(...whereCondition) : undefined);
+
+    // Get paginated data
+    const data = await db
+      .select()
+      .from(paymentProvider)
+      .where(whereCondition.length ? and(...whereCondition) : undefined)
+      .limit(pageSize)
+      .offset(offset)
+      .orderBy(paymentProvider.id);
+
+    return {
+      data,
+      pagination: {
+        page,
+        pageSize: pageSize,
+        total: totalCount[0]?.count || 0,
+        totalPages: Math.ceil((totalCount[0]?.count || 0) / pageSize),
+        hasNext: page < Math.ceil((totalCount[0]?.count || 0) / pageSize),
+        hasPrev: page > 1,
+      },
+    };
   },
 
   async getById(id: number) {

@@ -16,10 +16,10 @@ router.get("/:id", PaymentProviderController.getById);
 // POST /api/payment-providers - Create new payment provider
 router.post("/", PaymentProviderController.create);
 
-// PUT /api/payment-providers/:id - Update payment provider
-router.put("/:id", PaymentProviderController.update);
+// POST /api/payment-providers/:id - Update payment provider
+router.post("/update/:id", PaymentProviderController.update);
 
-// DELETE /api/payment-providers/:id - Delete payment provider
-router.delete("/:id", PaymentProviderController.delete);
+// POST /api/payment-providers/:id - Delete payment provider
+router.post("/delete/:id", PaymentProviderController.delete);
 
 export default router;

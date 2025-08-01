@@ -3,14 +3,15 @@ import { PaymentProviderModel } from "../models/paymentProvider.model";
 import { asyncHandler } from "../utils/asyncHandler";
 
 export const PaymentProviderController = {
-  // Get all payment providers with optional filtering
+  // Get all payment providers with optional filtering and pagination
   getAll: asyncHandler(async (req: Request, res: Response) => {
     const filters = req.query;
-    const providers = await PaymentProviderModel.getAll(filters);
+    const result = await PaymentProviderModel.getAll(filters);
 
     res.status(200).json({
       success: true,
-      data: providers,
+      data: result.data,
+      pagination: result.pagination,
     });
   }),
 

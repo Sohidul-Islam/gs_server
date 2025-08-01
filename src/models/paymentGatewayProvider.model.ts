@@ -20,14 +20,40 @@ export const PaymentGatewayProviderModel = {
         eq(paymentGatewayProvider.providerId, filter.providerId)
       );
 
-    return db
+    // Pagination parameters
+    const page = parseInt(filter.page as string) || 1;
+    const limit = parseInt(filter.limit as string) || 10;
+    const offset = (page - 1) * limit;
+
+    // Get total count for pagination
+    const totalCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(paymentGatewayProvider)
+      .where(whereCondition.length ? and(...whereCondition) : undefined);
+
+    // Get paginated data
+    const data = await db
       .select()
       .from(paymentGatewayProvider)
       .where(whereCondition.length ? and(...whereCondition) : undefined)
+      .limit(limit)
+      .offset(offset)
       .orderBy(
         asc(paymentGatewayProvider.priority),
         desc(paymentGatewayProvider.id)
       );
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total: totalCount[0]?.count || 0,
+        totalPages: Math.ceil((totalCount[0]?.count || 0) / limit),
+        hasNext: page < Math.ceil((totalCount[0]?.count || 0) / limit),
+        hasPrev: page > 1,
+      },
+    };
   },
 
   async getByGatewayId(gatewayId: number) {

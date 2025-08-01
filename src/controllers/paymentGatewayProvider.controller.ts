@@ -5,14 +5,15 @@ import { PaymentProviderModel } from "../models/paymentProvider.model";
 import { asyncHandler } from "../utils/asyncHandler";
 
 export const PaymentGatewayProviderController = {
-  // Get all gateway-provider relationships with optional filtering
+  // Get all gateway-provider relationships with optional filtering and pagination
   getAll: asyncHandler(async (req: Request, res: Response) => {
     const filters = req.query;
-    const relationships = await PaymentGatewayProviderModel.getAll(filters);
+    const result = await PaymentGatewayProviderModel.getAll(filters);
 
     res.status(200).json({
       success: true,
-      data: relationships,
+      data: result.data,
+      pagination: result.pagination,
     });
   }),
 
@@ -104,7 +105,7 @@ export const PaymentGatewayProviderController = {
       providerId: Number(providerId),
     });
 
-    if (existingRelationship && existingRelationship.length > 0) {
+    if (existingRelationship && existingRelationship.data.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Provider is already assigned to this gateway",
@@ -132,7 +133,7 @@ export const PaymentGatewayProviderController = {
     const existingRelationship = await PaymentGatewayProviderModel.getAll({
       id: Number(id),
     });
-    if (!existingRelationship || existingRelationship.length === 0) {
+    if (!existingRelationship || existingRelationship.data.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Gateway-provider relationship not found",
@@ -159,7 +160,7 @@ export const PaymentGatewayProviderController = {
       const existingRelationship = await PaymentGatewayProviderModel.getAll({
         id: Number(id),
       });
-      if (!existingRelationship || existingRelationship.length === 0) {
+      if (!existingRelationship || existingRelationship.data.length === 0) {
         return res.status(404).json({
           success: false,
           message: "Gateway-provider relationship not found",
@@ -185,7 +186,7 @@ export const PaymentGatewayProviderController = {
         providerId: Number(providerId),
       });
 
-      if (!existingRelationship || existingRelationship.length === 0) {
+      if (!existingRelationship || existingRelationship.data.length === 0) {
         return res.status(404).json({
           success: false,
           message: "Gateway-provider relationship not found",

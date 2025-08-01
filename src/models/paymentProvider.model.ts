@@ -13,6 +13,13 @@ export const PaymentProviderModel = {
       whereCondition.push(eq(paymentProvider.status, filter.status));
     if (filter.name)
       whereCondition.push(like(paymentProvider.name, `%${filter.name}%`));
+    if (filter.commissionPercentage !== undefined)
+      whereCondition.push(
+        eq(
+          paymentProvider.commissionPercentage,
+          Number(filter.commissionPercentage)
+        )
+      );
 
     return db
       .select()

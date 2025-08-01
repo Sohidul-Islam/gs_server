@@ -41,6 +41,7 @@ export const PaymentGatewayProviderModel = {
           id: paymentProvider.id,
           name: paymentProvider.name,
           contactInfo: paymentProvider.contactInfo,
+          commissionPercentage: paymentProvider.commissionPercentage,
           status: paymentProvider.status,
         },
       })

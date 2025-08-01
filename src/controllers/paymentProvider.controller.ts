@@ -34,7 +34,7 @@ export const PaymentProviderController = {
 
   // Create new payment provider
   create: asyncHandler(async (req: Request, res: Response) => {
-    const { name, contactInfo, status } = req.body;
+    const { name, contactInfo, commissionPercentage, status } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -43,9 +43,21 @@ export const PaymentProviderController = {
       });
     }
 
+    // Validate commission percentage
+    if (
+      commissionPercentage !== undefined &&
+      (commissionPercentage < 0 || commissionPercentage > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Commission percentage must be between 0 and 100",
+      });
+    }
+
     const newProvider = await PaymentProviderModel.create({
       name,
       contactInfo,
+      commissionPercentage: commissionPercentage || 0,
       status: status || "active",
     });
 

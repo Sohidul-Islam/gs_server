@@ -11,3 +11,5 @@ export * from "./schema/accounts";
 export * from "./schema/paymentMethods";
 export * from "./schema/paymentMethodTypes";
 export * from "./schema/paymentGateway";
+export * from "./schema/paymentProvider";
+export * from "./schema/paymentGatewayProvider";

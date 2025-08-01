@@ -20,10 +20,14 @@ export const PaymentGatewayProviderModel = {
         eq(paymentGatewayProvider.providerId, filter.providerId)
       );
 
+    if (filter.status) {
+      whereCondition.push(eq(paymentGatewayProvider.status, filter.status));
+    }
+
     // Pagination parameters
     const page = parseInt(filter.page as string) || 1;
-    const limit = parseInt(filter.limit as string) || 10;
-    const offset = (page - 1) * limit;
+    const pageSize = parseInt(filter.pageSize as string) || 10;
+    const offset = (page - 1) * pageSize;
 
     // Get total count for pagination
     const totalCount = await db
@@ -33,10 +37,45 @@ export const PaymentGatewayProviderModel = {
 
     // Get paginated data
     const data = await db
-      .select()
+      .select({
+        id: paymentGatewayProvider.id,
+        gatewayId: paymentGatewayProvider.gatewayId,
+        providerId: paymentGatewayProvider.providerId,
+        priority: paymentGatewayProvider.priority,
+        status: paymentGatewayProvider.status,
+        provider: {
+          id: paymentProvider.id,
+          name: paymentProvider.name,
+          contactInfo: paymentProvider.contactInfo,
+          commissionPercentage: paymentProvider.commissionPercentage,
+          status: paymentProvider.status,
+        },
+        gateway: {
+          id: paymentGateway.id,
+          name: paymentGateway.name,
+          methodId: paymentGateway.methodId,
+          status: paymentGateway.status,
+          iconUrl: paymentGateway.iconUrl,
+          minDeposit: paymentGateway.minDeposit,
+          maxDeposit: paymentGateway.maxDeposit,
+          minWithdraw: paymentGateway.minWithdraw,
+          maxWithdraw: paymentGateway.maxWithdraw,
+          countryId: paymentGateway.countryId,
+          network: paymentGateway.network,
+          currencyConversionRate: paymentGateway.currencyConversionRate,
+        },
+      })
       .from(paymentGatewayProvider)
+      .leftJoin(
+        paymentGateway,
+        eq(paymentGatewayProvider.gatewayId, paymentGateway.id)
+      )
+      .leftJoin(
+        paymentProvider,
+        eq(paymentGatewayProvider.providerId, paymentProvider.id)
+      )
       .where(whereCondition.length ? and(...whereCondition) : undefined)
-      .limit(limit)
+      .limit(pageSize)
       .offset(offset)
       .orderBy(
         asc(paymentGatewayProvider.priority),
@@ -47,10 +86,10 @@ export const PaymentGatewayProviderModel = {
       data,
       pagination: {
         page,
-        limit,
+        pageSize: pageSize,
         total: totalCount[0]?.count || 0,
-        totalPages: Math.ceil((totalCount[0]?.count || 0) / limit),
-        hasNext: page < Math.ceil((totalCount[0]?.count || 0) / limit),
+        totalPages: Math.ceil((totalCount[0]?.count || 0) / pageSize),
+        hasNext: page < Math.ceil((totalCount[0]?.count || 0) / pageSize),
         hasPrev: page > 1,
       },
     };
@@ -63,6 +102,7 @@ export const PaymentGatewayProviderModel = {
         gatewayId: paymentGatewayProvider.gatewayId,
         providerId: paymentGatewayProvider.providerId,
         priority: paymentGatewayProvider.priority,
+        status: paymentGatewayProvider.status,
         provider: {
           id: paymentProvider.id,
           name: paymentProvider.name,
@@ -70,11 +110,29 @@ export const PaymentGatewayProviderModel = {
           commissionPercentage: paymentProvider.commissionPercentage,
           status: paymentProvider.status,
         },
+        gateway: {
+          id: paymentGateway.id,
+          name: paymentGateway.name,
+          methodId: paymentGateway.methodId,
+          status: paymentGateway.status,
+          iconUrl: paymentGateway.iconUrl,
+          minDeposit: paymentGateway.minDeposit,
+          maxDeposit: paymentGateway.maxDeposit,
+          minWithdraw: paymentGateway.minWithdraw,
+          maxWithdraw: paymentGateway.maxWithdraw,
+          countryId: paymentGateway.countryId,
+          network: paymentGateway.network,
+          currencyConversionRate: paymentGateway.currencyConversionRate,
+        },
       })
       .from(paymentGatewayProvider)
       .innerJoin(
         paymentProvider,
         eq(paymentGatewayProvider.providerId, paymentProvider.id)
+      )
+      .innerJoin(
+        paymentGateway,
+        eq(paymentGatewayProvider.gatewayId, paymentGateway.id)
       )
       .where(eq(paymentGatewayProvider.gatewayId, gatewayId))
       .orderBy(
@@ -90,14 +148,33 @@ export const PaymentGatewayProviderModel = {
         gatewayId: paymentGatewayProvider.gatewayId,
         providerId: paymentGatewayProvider.providerId,
         priority: paymentGatewayProvider.priority,
+        provider: {
+          id: paymentProvider.id,
+          name: paymentProvider.name,
+          contactInfo: paymentProvider.contactInfo,
+          commissionPercentage: paymentProvider.commissionPercentage,
+          status: paymentProvider.status,
+        },
         gateway: {
           id: paymentGateway.id,
           name: paymentGateway.name,
           methodId: paymentGateway.methodId,
           status: paymentGateway.status,
+          iconUrl: paymentGateway.iconUrl,
+          minDeposit: paymentGateway.minDeposit,
+          maxDeposit: paymentGateway.maxDeposit,
+          minWithdraw: paymentGateway.minWithdraw,
+          maxWithdraw: paymentGateway.maxWithdraw,
+          countryId: paymentGateway.countryId,
+          network: paymentGateway.network,
+          currencyConversionRate: paymentGateway.currencyConversionRate,
         },
       })
       .from(paymentGatewayProvider)
+      .innerJoin(
+        paymentProvider,
+        eq(paymentGatewayProvider.providerId, paymentProvider.id)
+      )
       .innerJoin(
         paymentGateway,
         eq(paymentGatewayProvider.gatewayId, paymentGateway.id)

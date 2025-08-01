@@ -25,18 +25,18 @@ router.get(
 // POST /api/gateway-providers - Assign a provider to a gateway
 router.post("/", PaymentGatewayProviderController.assignProviderToGateway);
 
-// PUT /api/gateway-providers/:id/priority - Update relationship priority
-router.put("/:id/priority", PaymentGatewayProviderController.updatePriority);
+// post /api/gateway-providers/:id/priority - Update relationship priority
+router.post("/:id/priority", PaymentGatewayProviderController.updatePriority);
 
 // DELETE /api/gateway-providers/:id - Remove provider from gateway by relationship ID
-router.delete(
-  "/:id",
+router.post(
+  "/delete-provider-from-gateway/:id",
   PaymentGatewayProviderController.removeProviderFromGateway
 );
 
 // DELETE /api/gateway-providers/:gatewayId/:providerId - Remove provider from gateway by IDs
-router.delete(
-  "/:gatewayId/:providerId",
+router.post(
+  "/delete-provider-from-gateway/:gatewayId/:providerId",
   PaymentGatewayProviderController.removeProviderFromGatewayByIds
 );
 

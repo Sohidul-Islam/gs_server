@@ -13,7 +13,7 @@ export const getAllCountries = async (req: Request, res: Response) => {
   try {
     const status = req.query.status as "active" | "inactive" | undefined;
     const searchKey = req?.query?.searchKey as string;
-    const pageSize = parseInt((req.query.pageSize as string) || "10", 10);
+    const pageSize = parseInt((req.query.pageSize as string) || "200", 10);
     const page = parseInt((req.query.page as string) || "1", 10);
 
     const whereCondition = [];

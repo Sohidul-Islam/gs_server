@@ -22,6 +22,11 @@ export const PaymentGatewayModel = {
       whereCondition.push(like(paymentGateway.name, `%${filter.name}%`));
     if (filter.network)
       whereCondition.push(like(paymentGateway.network, `%${filter.network}%`));
+    if (filter.paymentMethodTypeId) {
+      whereCondition.push(
+        sql`JSON_CONTAINS(${paymentGateway.paymentMethodTypeIds}, CAST(${filter.paymentMethodTypeId} AS JSON))`
+      );
+    }
     return db
       .select()
       .from(paymentGateway)

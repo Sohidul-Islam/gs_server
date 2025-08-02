@@ -43,6 +43,9 @@ export const PaymentGatewayProviderModel = {
         providerId: paymentGatewayProvider.providerId,
         priority: paymentGatewayProvider.priority,
         status: paymentGatewayProvider.status,
+        isRecommended: paymentGatewayProvider?.isRecommended,
+        licenseKey:paymentGatewayProvider?.licenseKey,
+        commission:paymentGatewayProvider?.commission,
         provider: {
           id: paymentProvider.id,
           name: paymentProvider.name,
@@ -194,7 +197,7 @@ export const PaymentGatewayProviderModel = {
     return db
       .update(paymentGatewayProvider)
       .set(data)
-      .where(sql`${paymentGatewayProvider.id} = ${id}`);
+      .where(eq(paymentGatewayProvider.id, id));
   },
 
   async delete(id: number) {

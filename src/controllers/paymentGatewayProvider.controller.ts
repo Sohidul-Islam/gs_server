@@ -151,7 +151,31 @@ export const PaymentGatewayProviderController = {
       message: "Priority updated successfully",
     });
   }),
-
+  // Update recommendation
+  updateRcommendation: asyncHandler(async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const { isRecommended } = req.body;
+  
+      const existingRelationship = await PaymentGatewayProviderModel.getAll({
+        id: Number(id),
+      });
+      if (!existingRelationship || existingRelationship.data.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Gateway-provider relationship not found",
+        });
+      }
+  
+      const updatedRelationship = await PaymentGatewayProviderModel.update(
+        Number(id),
+        { isRecommended }
+      );
+  
+      res.status(200).json({
+        success: true,
+        data: updatedRelationship,
+        message: "Recommendation updated successfully",
+      });}),
   // Update relationship status
   updateStatus: asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -184,6 +208,33 @@ export const PaymentGatewayProviderController = {
       success: true,
       data: updatedRelationship,
       message: `Status updated to ${status} successfully`,
+    });
+  }),
+
+  // Update recommendation
+  updateGatewayProvider: asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const body = req.body;
+
+    const existingRelationship = await PaymentGatewayProviderModel.getAll({
+      id: Number(id),
+    });
+    if (!existingRelationship || existingRelationship.data.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Gateway-provider relationship not found",
+      });
+    }
+
+    const updatedRelationship = await PaymentGatewayProviderModel.update(
+      Number(id),
+      body
+    );
+
+    res.status(200).json({
+      success: true,
+      data: updatedRelationship,
+      message: "Priority updated successfully",
     });
   }),
 

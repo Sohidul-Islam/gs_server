@@ -25,6 +25,14 @@ export const getPaymentMethodById = async (req: Request, res: Response) => {
   return;
 };
 
+
+export const getPaymentMethodByName = async (req: Request, res: Response) => {
+  const { name } = req.params;
+  const { status } = req.query;
+  const method = await PaymentMethodModel.getPaymentMethodByName(name, {status: status as "active"|"inactive"|undefined});
+  res.json(method);
+};
+
 export const createPaymentMethod = async (req: Request, res: Response) => {
   const { name } = req.body;
   await PaymentMethodModel.create({ name });

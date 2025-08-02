@@ -13,3 +13,4 @@ export * from "./schema/paymentMethodTypes";
 export * from "./schema/paymentGateway";
 export * from "./schema/paymentProvider";
 export * from "./schema/paymentGatewayProvider";
+export * from "./schema/gameProvider";

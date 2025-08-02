@@ -1,8 +1,7 @@
 import {
   mysqlTable,
-  serial,
-  varchar,
   int,
+  varchar,
   mysqlEnum,
   datetime,
   decimal,
@@ -14,14 +13,13 @@ import { sql } from "drizzle-orm";
 export const promotions = mysqlTable("promotions", {
   id: int("id").primaryKey().autoincrement(),
   promotionName: varchar("promotion_name", { length: 300 }).notNull().unique(),
-  promotionTypeId: int("promotion_type_id").notNull(),
+  promotionTypeId: json("promotion_type_id").notNull(), // ✅ Now supports array
   status: mysqlEnum("status", ["active", "inactive"]).default("inactive"),
   dateRange: varchar("date_range", { length: 255 }).notNull(),
   minimumDepositAmount: decimal("minimum_deposit_amount", {
     precision: 20,
     scale: 2,
   }).notNull(),
-
   maximumDepositAmount: decimal("maximum_deposit_amount", {
     precision: 20,
     scale: 2,

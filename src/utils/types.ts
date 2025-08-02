@@ -8,7 +8,7 @@ export interface ImageObject {
 // promotions
 export interface PromotionDataType {
   promotionName: string;
-  promotionTypeId: number;
+  promotionTypeId: number[];
   status?: statusType; // Optional, defaults to 'inactive'
   dateRange: string;
   minimumDepositAmount: number;

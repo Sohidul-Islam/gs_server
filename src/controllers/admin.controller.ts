@@ -20,6 +20,11 @@ import {
   deleteById,
   findAdminByRefCode,
   getTotalCount,
+  updateGameProvider,
+  createGameProvider,
+  getPaginatedGameProviders,
+  getGameProviderById,
+  getAllGameProviders,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import {
@@ -29,9 +34,11 @@ import {
   banners,
   dropdownOptions,
   dropdowns,
+  game_providers,
   gamingLicenses,
   responsibleGaming,
   sponsors,
+  users,
   video_advertisement,
   website_popups,
 } from "../db/schema";
@@ -570,6 +577,7 @@ export const getSubAffiliatesListByAffiliateId = async (
         eq(adminUsers.createdBy, affiliateId),
         eq(adminUsers.referred_by, affiliateId)
       ),
+      eq(adminUsers.role, "affiliate"), // ✅ Only include users with role "affiliate"
     ];
 
     if (statusFilter) {
@@ -610,6 +618,80 @@ export const getSubAffiliatesListByAffiliateId = async (
     return res.status(500).json({
       status: false,
       message: "Failed to fetch sub-affiliates",
+      error,
+    });
+  }
+};
+export const getPlayersListByAffiliateId = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const affiliateId = Number(req.params.id);
+    if (isNaN(affiliateId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid affiliate ID",
+      });
+    }
+
+    const { page = 1, pageSize = 10, status } = req.query;
+
+    const currentPage = Math.max(Number(page), 1);
+    const limit = Math.max(Number(pageSize), 1);
+    const offset = (currentPage - 1) * limit;
+
+    const validStatuses = ["active", "inactive"];
+    const statusFilter =
+      status && validStatuses.includes(status as string)
+        ? (status as "active" | "inactive")
+        : undefined;
+
+    const whereClauses = [
+      or(
+        eq(users.referred_by_admin_user, affiliateId),
+        eq(users.referred_by, affiliateId)
+      ),
+    ];
+
+    if (statusFilter) {
+      whereClauses.push(eq(users.status, statusFilter));
+    }
+
+    const where = and(...whereClauses);
+
+    // Get total count
+    const total = await db
+      .select({ count: sql`COUNT(*)` })
+      .from(users)
+      .where(where)
+      .then((rows) => Number(rows[0]?.count || 0));
+
+    // Get paginated data
+    const data = await db
+      .select()
+      .from(users)
+      .where(where)
+      .limit(limit)
+      .offset(offset);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return res.json({
+      status: true,
+      data,
+      pagination: {
+        page: currentPage,
+        pageSize: limit,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching player list:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Failed to fetch player list",
       error,
     });
   }
@@ -905,11 +987,13 @@ export const addOrUpdatePromotion = async (req: Request, res: Response) => {
     }
 
     const {
-      id, // <-- NEW: Check this
+      id,
       promotionName,
       promotionTypeId,
       status = "inactive",
       dateRange,
+      startDate,
+      endDate,
       minimumDepositAmount,
       maximumDepositAmount,
       turnoverMultiply,
@@ -936,7 +1020,7 @@ export const addOrUpdatePromotion = async (req: Request, res: Response) => {
       }
     }
 
-    // Support array input for promotionTypeId
+    // Ensure promotionTypeId is always an array
     const promotionTypeIds: number[] = Array.isArray(promotionTypeId)
       ? promotionTypeId
       : [promotionTypeId];
@@ -959,15 +1043,15 @@ export const addOrUpdatePromotion = async (req: Request, res: Response) => {
       });
     }
 
-    const promotionPayload: PromotionDataType = {
+    const promotionPayload = {
       promotionName,
-      promotionTypeId,
+      promotionTypeId: promotionTypeIds, // ✅ save as array (JSON)
       status,
       dateRange,
       minimumDepositAmount: parseFloat(minimumDepositAmount),
       maximumDepositAmount: parseFloat(maximumDepositAmount),
       turnoverMultiply: parseInt(turnoverMultiply),
-      bannerImg,
+      bannerImg: bannerImgValue,
       bonus: parseInt(bonus),
       description,
       createdBy: userData?.username ?? "N/A",
@@ -1946,4 +2030,155 @@ export const deleteResponsibleGaming = async (req: Request, res: Response) => {
   }
 
   return res.status(200).json({ status: true, message: result.message });
+};
+
+// game provider
+export const addOrUpdateGameProvider = async (req: Request, res: Response) => {
+  try {
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    const requiredFields = {
+      name: "Name is required",
+      minBalanceLimit: "Minimum balance limit is required",
+      providerIp: "Provider IP is required",
+      licenseKey: "License Key is required",
+      phone: "Phone number is required",
+      email: "Email is required",
+      country: "Country is required",
+      logo: "Logo is required",
+    };
+
+    for (const [field, message] of Object.entries(requiredFields)) {
+      if (!req.body?.[field]) {
+        return res.status(400).json({ status: false, message });
+      }
+    }
+
+    const {
+      id,
+      name,
+      parentId,
+      status = "inactive",
+      minBalanceLimit,
+      providerIp,
+      licenseKey,
+      phone,
+      email,
+      whatsapp,
+      telegram,
+      country,
+      logo,
+    } = req.body;
+
+    const payload = {
+      name,
+      parentId: Number(parentId) || null,
+      status,
+      minBalanceLimit: parseFloat(minBalanceLimit).toFixed(2),
+      providerIp,
+      licenseKey,
+      phone,
+      email,
+      whatsapp: whatsapp || "",
+      telegram: telegram || "",
+      country,
+      logo,
+      createdBy: userData?.username ?? "N/A",
+      parentName: "",
+    };
+
+    // Add parentName if parentId is provided
+    if (payload.parentId) {
+      const [parentProvider] = await db
+        .select({ name: game_providers.name })
+        .from(game_providers)
+        .where(eq(game_providers.id, payload.parentId));
+
+      if (parentProvider) {
+        payload.parentName = parentProvider.name;
+      } else {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid parent provider ID",
+        });
+      }
+    }
+
+    if (id) {
+      await updateGameProvider(Number(id), payload);
+      return res.status(200).json({
+        status: true,
+        message: "Game provider updated successfully",
+        data: payload,
+      });
+    } else {
+      await createGameProvider(payload);
+      return res.status(201).json({
+        status: true,
+        message: "Game provider created successfully",
+      });
+    }
+  } catch (error: any) {
+    console.error("Error in addOrUpdateGameProvider:", error);
+
+    if (error.message === "DUPLICATE_NAME") {
+      return res
+        .status(409)
+        .json({ status: false, message: "Game provider name already exists." });
+    }
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal server error" });
+  }
+};
+export const getGameProvidersList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10, publicList, isParent } = req.query;
+
+    const providerId = id ? Number(id) : undefined;
+    const isParentBool = isParent === "true";
+    if (providerId) {
+      const provider = await getGameProviderById(providerId);
+      if (!provider) {
+        return res.status(404).json({
+          status: false,
+          message: "Game provider not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Game provider fetched successfully.",
+        data: provider,
+      });
+    }
+
+    if (publicList === "true") {
+      const allProviders = await getAllGameProviders(isParentBool);
+      return res.status(200).json({
+        status: true,
+        message: "All game providers fetched successfully.",
+        data: allProviders,
+      });
+    }
+
+    const result = await getPaginatedGameProviders(
+      Number(page),
+      Number(pageSize)
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "Game providers fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching game providers:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
 };

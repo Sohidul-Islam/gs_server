@@ -236,7 +236,6 @@ export const adminLogin = async (
     const userAgent = req.headers["user-agent"] || "";
     const parser = new UAParser.UAParser(userAgent);
     const uaResult = parser.getResult();
-    console.log({ uaResult });
     const device_type = uaResult.device.type || "Desktop";
     const device_name = uaResult.device.model || uaResult.os.name || "Unknown";
     const os_version = uaResult.os.name

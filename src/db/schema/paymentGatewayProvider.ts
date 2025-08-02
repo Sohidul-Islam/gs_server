@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, uniqueIndex } from "drizzle-orm/mysql-core";
+import { mysqlTable, int, varchar, uniqueIndex, text, double, boolean } from "drizzle-orm/mysql-core";
 import { paymentGateway } from "./paymentGateway";
 import { paymentProvider } from "./paymentProvider";
 import { ActivityStatus } from "./users";
@@ -13,6 +13,9 @@ export const paymentGatewayProvider = mysqlTable(
     providerId: int("provider_id")
       .notNull()
       .references(() => paymentProvider.id, { onDelete: "cascade" }),
+    licenseKey: text("license_key"),
+    commission: double("commission"),
+    isRecomended: boolean("is_recomended"),
     priority: int("priority"),
     status: ActivityStatus.default("active"),
   },

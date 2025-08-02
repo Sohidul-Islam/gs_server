@@ -15,7 +15,7 @@ export const paymentGatewayProvider = mysqlTable(
       .references(() => paymentProvider.id, { onDelete: "cascade" }),
     licenseKey: text("license_key"),
     commission: double("commission"),
-    isRecomended: boolean("is_recomended"),
+    isRecommended: boolean("is_recommended"),
     priority: int("priority"),
     status: ActivityStatus.default("active"),
   },

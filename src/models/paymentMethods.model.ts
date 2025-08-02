@@ -100,7 +100,7 @@ export const PaymentMethodModel = {
             ...row.provider,
             licenseKey: row.gatewayProvider?.licenseKey,
             commission: row.gatewayProvider?.commission,
-            isRecomended: row.gatewayProvider?.isRecomended
+            isRecomended: row.gatewayProvider?.isRecommended
           });
         }
       }

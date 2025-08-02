@@ -43,6 +43,9 @@ import {
   getAllResponsibleGaming,
   deleteResponsibleGaming,
   getSubAffiliatesListByAffiliateId,
+  getPlayersListByAffiliateId,
+  addOrUpdateGameProvider,
+  getGameProvidersList,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -64,6 +67,11 @@ router.get(
   "/affiliates/:id/sub-affiliates-list",
   verifyToken,
   asyncHandler(getSubAffiliatesListByAffiliateId)
+);
+router.get(
+  "/affiliates/:id/players-list",
+  verifyToken,
+  asyncHandler(getPlayersListByAffiliateId)
 );
 
 // configuration
@@ -189,5 +197,12 @@ router.post(
   "/delete-responsible-gaming/:id",
   verifyToken,
   asyncHandler(deleteResponsibleGaming)
+);
+
+router.get("/game-providers", verifyToken, asyncHandler(getGameProvidersList));
+router.post(
+  "/game-provider",
+  verifyToken,
+  asyncHandler(addOrUpdateGameProvider)
 );
 export default router;

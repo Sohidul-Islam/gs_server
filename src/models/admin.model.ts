@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, or, and, like, inArray, ne, desc } from "drizzle-orm";
+import { eq, or, and, like, inArray, ne, desc, isNotNull } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
   adminUsers,
@@ -8,6 +8,7 @@ import {
   currencies,
   dropdownOptions,
   dropdowns,
+  game_providers,
   promotions,
 } from "../db/schema";
 import { db } from "../db/connection";
@@ -321,22 +322,27 @@ export async function createPromotion(promotionData: PromotionDataType) {
     throw new Error("DUPLICATE_PROMOTION");
   }
 
-  const [typeOption] = await db
+  const typeIds = Array.isArray(promotionData.promotionTypeId)
+    ? promotionData.promotionTypeId
+    : [promotionData.promotionTypeId];
+
+  const validOptions = await db
     .select()
     .from(dropdownOptions)
     .where(
       and(
-        eq(dropdownOptions.id, promotionData.promotionTypeId),
+        inArray(dropdownOptions.id, typeIds),
         eq(dropdownOptions.status, "active")
       )
     );
 
-  if (!typeOption) {
+  if (validOptions.length !== typeIds.length) {
     throw new Error("INVALID_PROMOTION_TYPE");
   }
-  console.log("object", promotionData);
+
   await db.insert(promotions).values({
     ...promotionData,
+    promotionTypeId: typeIds, // save as array (JSON)
     status: promotionData.status || "inactive",
     minimumDepositAmount: promotionData.minimumDepositAmount.toFixed(2),
     maximumDepositAmount: promotionData.maximumDepositAmount.toFixed(2),
@@ -363,17 +369,21 @@ export async function updatePromotion(
     throw new Error("DUPLICATE_PROMOTION");
   }
 
-  const [typeOption] = await db
+  const typeIds = Array.isArray(promotionData.promotionTypeId)
+    ? promotionData.promotionTypeId
+    : [promotionData.promotionTypeId];
+
+  const validOptions = await db
     .select()
     .from(dropdownOptions)
     .where(
       and(
-        eq(dropdownOptions.id, promotionData.promotionTypeId),
+        inArray(dropdownOptions.id, typeIds),
         eq(dropdownOptions.status, "active")
       )
     );
 
-  if (!typeOption) {
+  if (validOptions.length !== typeIds.length) {
     throw new Error("INVALID_PROMOTION_TYPE");
   }
 
@@ -381,6 +391,7 @@ export async function updatePromotion(
     .update(promotions)
     .set({
       ...promotionData,
+      promotionTypeId: typeIds, // store array
       status: promotionData.status || "inactive",
       minimumDepositAmount: promotionData.minimumDepositAmount.toFixed(2),
       maximumDepositAmount: promotionData.maximumDepositAmount.toFixed(2),
@@ -391,36 +402,27 @@ export async function updatePromotion(
 }
 
 export const getPromotionById = async (id: number) => {
-  const [row] = await db
-    .select(promotionSelectFields)
+  const [promotion] = await db
+    .select()
     .from(promotions)
-    .leftJoin(
-      dropdownOptions,
-      eq(promotions.promotionTypeId, dropdownOptions.id)
-    )
     .where(eq(promotions.id, id));
 
-  if (!row) return null;
+  if (!promotion) return null;
 
-  const {
-    promotionTypeId,
-    promotionTypeTitle,
-    promotionTypeDropdownId,
-    promotionTypeStatus,
-    promotionTypeCreatedBy,
-    promotionTypeCreatedAt,
-    ...promotion
-  } = row;
+  const typeIds = Array.isArray(promotion.promotionTypeId)
+    ? promotion.promotionTypeId
+    : [];
+
+  const fullTypeData = await db
+    .select()
+    .from(dropdownOptions)
+    .where(inArray(dropdownOptions.id, typeIds as number[]));
 
   return {
     ...promotion,
     promotionType: {
-      id: promotionTypeId,
-      title: promotionTypeTitle,
-      dropdownId: promotionTypeDropdownId,
-      status: promotionTypeStatus,
-      createdBy: promotionTypeCreatedBy,
-      createdAt: promotionTypeCreatedAt,
+      id: typeIds,
+      data: fullTypeData,
     },
   };
 };
@@ -431,37 +433,57 @@ export const getPaginatedPromotions = async (
 ) => {
   const offset = (page - 1) * pageSize;
 
+  // Step 1: Get paginated promotions
   const rows = await db
     .select()
     .from(promotions)
-    .leftJoin(
-      dropdownOptions,
-      eq(promotions.promotionTypeId, dropdownOptions.id)
-    )
     .limit(pageSize)
     .offset(offset);
 
+  // Step 2: Get total count
   const countResult = await db
     .select({ count: sql`COUNT(*)`.as("count") })
     .from(promotions);
-
   const total = Number(countResult[0].count);
 
-  const data = rows.map((row) => {
-    const { promotions, dropdown_options } = row;
+  // Step 3: Extract all typeIds (flattened)
+  const allTypeIds: number[] = Array.from(
+    new Set(
+      rows.flatMap((row) =>
+        Array.isArray(row.promotionTypeId) ? row.promotionTypeId : []
+      )
+    )
+  );
+
+  // Step 4: Get full dropdownOption data for all involved typeIds
+  const dropdownOptionMap: Record<number, typeof dropdownOptions.$inferSelect> =
+    {};
+
+  if (allTypeIds.length > 0) {
+    const optionRows = await db
+      .select()
+      .from(dropdownOptions)
+      .where(inArray(dropdownOptions.id, allTypeIds as number[]));
+
+    for (const opt of optionRows) {
+      dropdownOptionMap[opt.id] = opt;
+    }
+  }
+
+  // Step 5: Map result to match frontend expectations
+  const data = rows.map((promotion) => {
+    const typeIds: number[] = Array.isArray(promotion.promotionTypeId)
+      ? promotion.promotionTypeId
+      : [];
+
+    const typeData = typeIds.map((id) => dropdownOptionMap[id]).filter(Boolean);
 
     return {
-      ...promotions,
-      promotionType: dropdown_options
-        ? {
-            id: dropdown_options.id,
-            title: dropdown_options.title,
-            dropdownId: dropdown_options.dropdown_id,
-            status: dropdown_options.status,
-            createdBy: dropdown_options.created_by,
-            createdAt: dropdown_options.created_at,
-          }
-        : null,
+      ...promotion,
+      promotionType: {
+        id: typeIds,
+        data: typeData,
+      },
     };
   });
 
@@ -475,6 +497,7 @@ export const getPaginatedPromotions = async (
     },
   };
 };
+
 export const getPaginatedAnnouncements = async (
   page: number,
   pageSize: number
@@ -543,4 +566,77 @@ export const getTotalCount = async (table: AnyMySqlTable) => {
     .from(table);
 
   return Number(result[0].count);
+};
+
+export async function createGameProvider(data: any) {
+  const [existing] = await db
+    .select()
+    .from(game_providers)
+    .where(eq(game_providers.name, data.name));
+
+  if (existing) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db.insert(game_providers).values(data);
+}
+export async function updateGameProvider(id: number, data: any) {
+  const [existing] = await db
+    .select()
+    .from(game_providers)
+    .where(and(eq(game_providers.name, data.name), ne(game_providers.id, id)));
+
+  if (existing) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db.update(game_providers).set(data).where(eq(game_providers.id, id));
+}
+export async function getGameProviderById(id: number) {
+  const [provider] = await db
+    .select()
+    .from(game_providers)
+    .where(eq(game_providers.id, id));
+
+  return provider || null;
+}
+export async function getPaginatedGameProviders(
+  page: number,
+  pageSize: number
+) {
+  const offset = (page - 1) * pageSize;
+
+  const rows = await db
+    .select()
+    .from(game_providers)
+    .limit(pageSize)
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(game_providers);
+
+  const total = Number(countResult[0].count);
+
+  return {
+    data: rows,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+}
+// Example implementation
+export const getAllGameProviders = async (isParent?: boolean) => {
+  const providers =
+    isParent === true
+      ? await db
+          .select()
+          .from(game_providers)
+          .where(isNotNull(game_providers.parentId))
+      : await db.select().from(game_providers);
+
+  return providers;
 };

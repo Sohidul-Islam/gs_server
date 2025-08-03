@@ -44,6 +44,7 @@ export const PaymentGatewayProviderController = {
   // Get gateways for a specific provider
   getGatewaysByProvider: asyncHandler(async (req: Request, res: Response) => {
     const { providerId } = req.params;
+    const filters = req.query;
 
     const existingProvider = await PaymentProviderModel.getById(
       Number(providerId)
@@ -55,13 +56,15 @@ export const PaymentGatewayProviderController = {
       });
     }
 
-    const gateways = await PaymentGatewayProviderModel.getByProviderId(
-      Number(providerId)
+    const result = await PaymentGatewayProviderModel.getByProviderId(
+      Number(providerId),
+      filters
     );
 
     res.status(200).json({
       success: true,
-      data: gateways,
+      data: result.data,
+      pagination: result.pagination,
     });
   }),
 

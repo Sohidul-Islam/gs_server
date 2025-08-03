@@ -144,8 +144,26 @@ export const PaymentGatewayProviderModel = {
       );
   },
 
-  async getByProviderId(providerId: number) {
-    return db
+  async getByProviderId(providerId: number, filter: any = {}) {
+    const whereCondition = [eq(paymentGatewayProvider.providerId, providerId)];
+
+    if (filter.status) {
+      whereCondition.push(eq(paymentGatewayProvider.status, filter.status));
+    }
+
+    // Pagination parameters
+    const page = parseInt(filter.page as string) || 1;
+    const pageSize = parseInt(filter.pageSize as string) || 10;
+    const offset = (page - 1) * pageSize;
+
+    // Get total count for pagination
+    const totalCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(paymentGatewayProvider)
+      .where(and(...whereCondition));
+
+    // Get paginated data
+    const data = await db
       .select({
         id: paymentGatewayProvider.id,
         gatewayId: paymentGatewayProvider.gatewayId,
@@ -186,11 +204,25 @@ export const PaymentGatewayProviderModel = {
         paymentGateway,
         eq(paymentGatewayProvider.gatewayId, paymentGateway.id)
       )
-      .where(eq(paymentGatewayProvider.providerId, providerId))
+      .where(and(...whereCondition))
+      .limit(pageSize)
+      .offset(offset)
       .orderBy(
         asc(paymentGatewayProvider.priority),
         desc(paymentGatewayProvider.id)
       );
+
+    return {
+      data,
+      pagination: {
+        page,
+        pageSize: pageSize,
+        total: totalCount[0]?.count || 0,
+        totalPages: Math.ceil((totalCount[0]?.count || 0) / pageSize),
+        hasNext: page < Math.ceil((totalCount[0]?.count || 0) / pageSize),
+        hasPrev: page > 1,
+      },
+    };
   },
 
   async create(data: typeof NewPaymentGatewayProvider) {

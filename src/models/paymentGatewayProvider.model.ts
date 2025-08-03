@@ -44,8 +44,8 @@ export const PaymentGatewayProviderModel = {
         priority: paymentGatewayProvider.priority,
         status: paymentGatewayProvider.status,
         isRecommended: paymentGatewayProvider?.isRecommended,
-        licenseKey:paymentGatewayProvider?.licenseKey,
-        commission:paymentGatewayProvider?.commission,
+        licenseKey: paymentGatewayProvider?.licenseKey,
+        commission: paymentGatewayProvider?.commission,
         provider: {
           id: paymentProvider.id,
           name: paymentProvider.name,
@@ -213,6 +213,18 @@ export const PaymentGatewayProviderModel = {
         and(
           eq(paymentGatewayProvider.gatewayId, gatewayId),
           eq(paymentGatewayProvider.providerId, providerId)
+        )
+      );
+  },
+
+  async updateOtherRecommendations(gatewayId: number, excludeId: number) {
+    return db
+      .update(paymentGatewayProvider)
+      .set({ isRecommended: false })
+      .where(
+        and(
+          eq(paymentGatewayProvider.gatewayId, gatewayId),
+          sql`${paymentGatewayProvider.id} != ${excludeId}`
         )
       );
   },

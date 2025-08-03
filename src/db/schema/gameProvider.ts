@@ -18,6 +18,18 @@ export const game_providers = mysqlTable("game_providers", {
     precision: 20,
     scale: 2,
   }).notNull(),
+  mainBalance: decimal("main_balance", {
+    precision: 20,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
+  totalExpense: decimal("total_expense", {
+    precision: 20,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
   providerIp: text("provider_ip").notNull(),
   licenseKey: text("license_key").notNull(),
   phone: varchar("phone", { length: 200 }).notNull(),

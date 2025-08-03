@@ -1,6 +1,16 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, or, and, like, inArray, ne, desc, isNotNull } from "drizzle-orm";
+import {
+  eq,
+  or,
+  and,
+  like,
+  inArray,
+  ne,
+  desc,
+  isNotNull,
+  isNull,
+} from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
   adminUsers,
@@ -602,13 +612,16 @@ export async function getGameProviderById(id: number) {
 }
 export async function getPaginatedGameProviders(
   page: number,
-  pageSize: number
+  pageSize: number,
+  parentId: any
 ) {
   const offset = (page - 1) * pageSize;
-
+  const whereClause =
+    parentId !== undefined ? eq(game_providers.parentId, parentId) : undefined;
   const rows = await db
     .select()
     .from(game_providers)
+    .where(whereClause)
     .limit(pageSize)
     .offset(offset);
 
@@ -635,7 +648,7 @@ export const getAllGameProviders = async (isParent?: boolean) => {
       ? await db
           .select()
           .from(game_providers)
-          .where(isNotNull(game_providers.parentId))
+          .where(isNull(game_providers.parentId))
       : await db.select().from(game_providers);
 
   return providers;

@@ -79,7 +79,7 @@ export const updatePaymentGateway = async (req: Request, res: Response) => {
     const result = await PaymentGatewayModel.update(id, req.body);
     if (!result)
       return res.status(404).json({ error: "Payment gateway not found" });
-    res.json({ message: "Payment gateway updated" });
+    res.json({ message: "Payment gateway updated", status: true });
   } catch (err) {
     res
       .status(500)

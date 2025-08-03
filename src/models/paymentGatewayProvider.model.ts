@@ -151,6 +151,10 @@ export const PaymentGatewayProviderModel = {
         gatewayId: paymentGatewayProvider.gatewayId,
         providerId: paymentGatewayProvider.providerId,
         priority: paymentGatewayProvider.priority,
+        status: paymentGatewayProvider.status,
+        isRecommended: paymentGatewayProvider?.isRecommended,
+        licenseKey: paymentGatewayProvider?.licenseKey,
+        commission: paymentGatewayProvider?.commission,
         provider: {
           id: paymentProvider.id,
           name: paymentProvider.name,

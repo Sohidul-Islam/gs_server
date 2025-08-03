@@ -2133,7 +2133,14 @@ export const addOrUpdateGameProvider = async (req: Request, res: Response) => {
 };
 export const getGameProvidersList = async (req: Request, res: Response) => {
   try {
-    const { id, page = 1, pageSize = 10, publicList, isParent } = req.query;
+    const {
+      id,
+      page = 1,
+      pageSize = 10,
+      publicList,
+      isParent,
+      parentId,
+    } = req.query;
 
     const providerId = id ? Number(id) : undefined;
     const isParentBool = isParent === "true";
@@ -2164,7 +2171,8 @@ export const getGameProvidersList = async (req: Request, res: Response) => {
 
     const result = await getPaginatedGameProviders(
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
+      parentId
     );
 
     return res.status(200).json({

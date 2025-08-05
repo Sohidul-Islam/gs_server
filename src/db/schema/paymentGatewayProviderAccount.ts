@@ -16,7 +16,6 @@ export const paymentGatewayProviderAccount = mysqlTable(
       .notNull()
       .references(() => paymentGatewayProvider.id, { onDelete: "cascade" }),
     // Common fields
-    accountType: varchar("account_type", { length: 50 }).notNull(), // 'bank' or 'wallet'
     accountNumber: varchar("account_number", { length: 100 }),
     holderName: varchar("holder_name", { length: 100 }),
     provider: varchar("provider", { length: 100 }),

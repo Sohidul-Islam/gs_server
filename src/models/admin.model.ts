@@ -19,6 +19,7 @@ import {
   dropdownOptions,
   dropdowns,
   game_providers,
+  games,
   promotions,
 } from "../db/schema";
 import { db } from "../db/connection";
@@ -653,3 +654,55 @@ export const getAllGameProviders = async (isParent?: boolean) => {
 
   return providers;
 };
+
+// game
+export async function createGame(data: any) {
+  const [existing] = await db
+    .select()
+    .from(games)
+    .where(eq(games.name, data.name));
+
+  if (existing) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db.insert(games).values(data);
+}
+
+export async function updateGame(id: number, data: any) {
+  const [existing] = await db
+    .select()
+    .from(games)
+    .where(eq(games.name, data.name));
+
+  if (existing && existing.id !== id) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db.update(games).set(data).where(eq(games.id, id));
+}
+export async function getPaginatedGameList(page: number, pageSize: number) {
+  const offset = (page - 1) * pageSize;
+  const rows = await db.select().from(games).limit(pageSize).offset(offset);
+
+  const countResult = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(games);
+
+  const total = Number(countResult[0].count);
+
+  return {
+    data: rows,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+}
+export async function getGameDetailsById(id: number) {
+  const [game] = await db.select().from(games).where(eq(games.id, id));
+
+  return game || null;
+}

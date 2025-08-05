@@ -4,16 +4,20 @@ import { eq } from "drizzle-orm";
 
 export const seedDropdowns = async () => {
   try {
-    const existing = await db
-      .select()
-      .from(dropdowns)
-      .where(eq(dropdowns.name, "Promotion Type"));
+    const dropdownNames = ["Promotion Type", "Categories"];
 
-    if (existing.length === 0) {
-      await db.insert(dropdowns).values([{ name: "Promotion Type" }]);
-      console.log("✅ Dropdowns seeded");
-    } else {
-      console.log("⚠️ 'Promotion Type' already exists, skipping insert");
+    for (const name of dropdownNames) {
+      const existing = await db
+        .select()
+        .from(dropdowns)
+        .where(eq(dropdowns.name, name));
+
+      if (existing.length === 0) {
+        await db.insert(dropdowns).values([{ name }]);
+        console.log(`✅ '${name}' seeded`);
+      } else {
+        console.log(`⚠️ '${name}' already exists, skipping insert`);
+      }
     }
   } catch (err) {
     console.error("❌ Failed to seed dropdowns:", err);

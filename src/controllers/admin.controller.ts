@@ -25,6 +25,10 @@ import {
   getPaginatedGameProviders,
   getGameProviderById,
   getAllGameProviders,
+  updateGame,
+  createGame,
+  getGameDetailsById,
+  getPaginatedGameList,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import {
@@ -2183,6 +2187,155 @@ export const getGameProvidersList = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching game providers:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+export const addOrUpdateGame = async (req: Request, res: Response) => {
+  try {
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    const requiredFields = {
+      name: "Game name is required",
+      apiKey: "API Key is required",
+      licenseKey: "License Key is required",
+      gameLogo: "Game Logo is required",
+      secretPin: "Secret Pin is required",
+      gameUrl: "Game URL is required",
+      ggrPercent: "GGR Percent is required",
+      categoryId: "Category is required",
+      providerId: "Game Provider is required",
+    };
+
+    for (const [field, message] of Object.entries(requiredFields)) {
+      if (!req.body?.[field]) {
+        return res.status(400).json({ status: false, message });
+      }
+    }
+
+    const {
+      id,
+      name,
+      parentId,
+      status = "inactive",
+      apiKey,
+      licenseKey,
+      gameLogo,
+      secretPin,
+      gameUrl,
+      ggrPercent,
+      categoryId,
+      providerId,
+      createdBy,
+      isFavorite,
+    } = req.body;
+
+    const createdByData = (req as any)?.user?.username ?? createdBy;
+    const payload: any = {
+      name,
+      parentId: Number(parentId) || null,
+      status,
+      apiKey,
+      licenseKey,
+      gameLogo,
+      secretPin,
+      gameUrl,
+      ggrPercent,
+      createdBy: Number(createdByData) || undefined,
+      categoryInfo: null,
+      providerInfo: null,
+      isFavorite,
+    };
+
+    // Fetch category info
+    const [categoryInfo] = await db
+      .select()
+      .from(dropdownOptions)
+      .where(eq(dropdownOptions.id, Number(categoryId)));
+
+    if (!categoryInfo) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid category ID" });
+    }
+
+    payload.categoryInfo = categoryInfo;
+
+    // Fetch provider info
+    const [providerInfo] = await db
+      .select()
+      .from(game_providers)
+      .where(eq(game_providers.id, Number(providerId)));
+
+    if (!providerInfo) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid provider ID" });
+    }
+
+    payload.providerInfo = providerInfo;
+
+    if (id) {
+      await updateGame(Number(id), payload);
+      return res.status(200).json({
+        status: true,
+        message: "Game updated successfully",
+        data: payload,
+      });
+    } else {
+      await createGame(payload);
+      return res.status(201).json({
+        status: true,
+        message: "Game created successfully",
+      });
+    }
+  } catch (error: any) {
+    console.error("Error in addOrUpdateGame:", error);
+
+    if (error.message === "DUPLICATE_NAME") {
+      return res
+        .status(409)
+        .json({ status: false, message: "Game name already exists." });
+    }
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal server error" });
+  }
+};
+export const getGameList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const gameId = id ? Number(id) : undefined;
+    if (gameId) {
+      const gameDetails = await getGameDetailsById(gameId);
+      if (!gameDetails) {
+        return res.status(404).json({
+          status: false,
+          message: "Game not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Game fetched successfully.",
+        data: gameDetails,
+      });
+    }
+
+    const result = await getPaginatedGameList(Number(page), Number(pageSize));
+
+    return res.status(200).json({
+      status: true,
+      message: "Game list fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching game list:", error);
     return res.status(500).json({
       status: false,
       message: "Server error",

@@ -10,7 +10,7 @@ import { ActivityStatus } from "./users";
 
 export const paymentGatewayProviderAccount = mysqlTable("gateway_accounts", {
   id: int("id").primaryKey().autoincrement(),
-  paymentGatewayProviderId: int("gateway_provider_id")
+  paymentGatewayProviderId: int("provider_id")
     .notNull()
     .references(() => paymentGatewayProvider.id, { onDelete: "cascade" }),
   // Common fields

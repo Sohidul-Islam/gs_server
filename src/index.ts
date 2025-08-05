@@ -13,7 +13,7 @@ import userRouter from "./routes/user.route";
 import publicRouter from "./routes/public.route";
 import adminRouter from "./routes/admin.route";
 import countryRouter from "./routes/country.route";
-import accountRoutes from "./routes/account.route";
+
 import paymentMethodRouter from "./routes/paymentMethods.route";
 import paymentMethodTypeRouter from "./routes/paymentMethodTypes.route";
 import paymentGatewayRoute from "./routes/paymentGateway.route";
@@ -78,7 +78,7 @@ app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 
 app.use("/api/countries", countryRouter);
-app.use("/api/accounts", accountRoutes);
+
 app.use("/api/payment-method", paymentMethodRouter);
 app.use("/api/payment-method-types", paymentMethodTypeRouter);
 app.use("/api/payment-gateways", paymentGatewayRoute);

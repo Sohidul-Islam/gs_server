@@ -19,6 +19,7 @@ import paymentMethodTypeRouter from "./routes/paymentMethodTypes.route";
 import paymentGatewayRoute from "./routes/paymentGateway.route";
 import paymentProviderRoute from "./routes/paymentProvider.route";
 import paymentGatewayProviderRoute from "./routes/paymentGatewayProvider.route";
+import paymentGateWayAccountsRoute from "./routes/paymentGatewayProviderAccount.route";
 import { errorHandler } from "./middlewares/errorHandler";
 import { setupSwagger } from "./utils/swagger";
 // Ensure process.env.DATABASE_URL is defined and of correct type
@@ -83,6 +84,7 @@ app.use("/api/payment-method-types", paymentMethodTypeRouter);
 app.use("/api/payment-gateways", paymentGatewayRoute);
 app.use("/api/payment-providers", paymentProviderRoute);
 app.use("/api/gateway-providers", paymentGatewayProviderRoute);
+app.use("/api/gateway-provider-accounts", paymentGateWayAccountsRoute);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Fashion Glory API!");

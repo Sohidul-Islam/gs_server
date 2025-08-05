@@ -46,6 +46,8 @@ import {
   getPlayersListByAffiliateId,
   addOrUpdateGameProvider,
   getGameProvidersList,
+  addOrUpdateGame,
+  getGameList,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -205,4 +207,6 @@ router.post(
   verifyToken,
   asyncHandler(addOrUpdateGameProvider)
 );
+router.post("/add-update-game", verifyToken, asyncHandler(addOrUpdateGame));
+router.get("/games", verifyToken, asyncHandler(getGameList));
 export default router;

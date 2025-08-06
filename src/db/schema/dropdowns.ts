@@ -10,7 +10,7 @@ import {
 
 export const dropdowns = mysqlTable("dropdowns", {
   id: int("id").primaryKey().autoincrement(),
-  name: varchar("name", { length: 200 }).notNull(), // Example: "Promotion Type"
+  name: varchar("name", { length: 200 }).notNull(),
   created_at: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

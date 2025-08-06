@@ -29,6 +29,15 @@ import {
   createGame,
   getGameDetailsById,
   getPaginatedGameList,
+  updateSportsProvider,
+  createSportsProvider,
+  getSportsProviderById,
+  getAllSportsProviders,
+  getPaginatedSportsProviders,
+  updateSport,
+  createSport,
+  getSportDetailsById,
+  getPaginatedSportList,
 } from "../models/admin.model";
 import { db } from "../db/connection";
 import {
@@ -42,6 +51,7 @@ import {
   gamingLicenses,
   responsibleGaming,
   sponsors,
+  sports_providers,
   users,
   video_advertisement,
   website_popups,
@@ -2336,6 +2346,318 @@ export const getGameList = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching game list:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
+// sports provider
+export const addOrUpdateSportsProvider = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    const requiredFields = {
+      name: "Name is required",
+      minBalanceLimit: "Minimum balance limit is required",
+      providerIp: "Provider IP is required",
+      licenseKey: "License Key is required",
+      phone: "Phone number is required",
+      email: "Email is required",
+      country: "Country is required",
+      logo: "Logo is required",
+    };
+
+    for (const [field, message] of Object.entries(requiredFields)) {
+      if (!req.body?.[field]) {
+        return res.status(400).json({ status: false, message });
+      }
+    }
+
+    const {
+      id,
+      name,
+      parentId,
+      status = "inactive",
+      minBalanceLimit,
+      providerIp,
+      licenseKey,
+      phone,
+      email,
+      whatsapp,
+      telegram,
+      country,
+      logo,
+    } = req.body;
+
+    const payload = {
+      name,
+      parentId: Number(parentId) || null,
+      status,
+      minBalanceLimit: parseFloat(minBalanceLimit).toFixed(2),
+      providerIp,
+      licenseKey,
+      phone,
+      email,
+      whatsapp: whatsapp || "",
+      telegram: telegram || "",
+      country,
+      logo,
+      createdBy: userData?.username ?? "N/A",
+      parentName: "",
+    };
+
+    // Add parentName if parentId is provided
+    if (payload.parentId) {
+      const [parentProvider] = await db
+        .select({ name: sports_providers.name })
+        .from(sports_providers)
+        .where(eq(sports_providers.id, payload.parentId));
+
+      if (parentProvider) {
+        payload.parentName = parentProvider.name;
+      } else {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid parent provider ID",
+        });
+      }
+    }
+
+    if (id) {
+      await updateSportsProvider(Number(id), payload);
+      return res.status(200).json({
+        status: true,
+        message: "Sports provider updated successfully",
+        data: payload,
+      });
+    } else {
+      await createSportsProvider(payload);
+      return res.status(201).json({
+        status: true,
+        message: "Sports provider created successfully",
+      });
+    }
+  } catch (error: any) {
+    console.error("Error in add or update sports provider:", error);
+
+    if (error.message === "DUPLICATE_NAME") {
+      return res.status(409).json({
+        status: false,
+        message: "Sports provider name already exists.",
+      });
+    }
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal server error" });
+  }
+};
+export const getSportsProvidersList = async (req: Request, res: Response) => {
+  try {
+    const {
+      id,
+      page = 1,
+      pageSize = 10,
+      publicList,
+      isParent,
+      parentId,
+    } = req.query;
+
+    const providerId = id ? Number(id) : undefined;
+    const isParentBool = isParent === "true";
+    if (providerId) {
+      const provider = await getSportsProviderById(providerId);
+      if (!provider) {
+        return res.status(404).json({
+          status: false,
+          message: "Sports provider not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Sports provider fetched successfully.",
+        data: provider,
+      });
+    }
+
+    if (publicList === "true") {
+      const allProviders = await getAllSportsProviders(isParentBool);
+      return res.status(200).json({
+        status: true,
+        message: "All sports providers fetched successfully.",
+        data: allProviders,
+      });
+    }
+
+    const result = await getPaginatedSportsProviders(
+      Number(page),
+      Number(pageSize),
+      parentId
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "Sports providers fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching sports providers:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+export const addOrUpdateSport = async (req: Request, res: Response) => {
+  try {
+    const userData = (req as unknown as { user: DecodedUser | null })?.user;
+
+    const requiredFields = {
+      name: "Sport name is required",
+      apiKey: "API Key is required",
+      licenseKey: "License Key is required",
+      sportLogo: "Sport Logo is required",
+      secretPin: "Secret Pin is required",
+      sportUrl: "Sport URL is required",
+      ggrPercent: "GGR Percent is required",
+      categoryId: "Category is required",
+      providerId: "Sport Provider is required",
+    };
+
+    for (const [field, message] of Object.entries(requiredFields)) {
+      if (!req.body?.[field]) {
+        return res.status(400).json({ status: false, message });
+      }
+    }
+
+    const {
+      id,
+      name,
+      parentId,
+      status = "inactive",
+      apiKey,
+      licenseKey,
+      sportLogo,
+      secretPin,
+      sportUrl,
+      ggrPercent,
+      categoryId,
+      providerId,
+      createdBy,
+      isFavorite,
+    } = req.body;
+
+    const createdByData = (req as any)?.user?.username ?? createdBy;
+    const payload: any = {
+      name,
+      parentId: Number(parentId) || null,
+      status,
+      apiKey,
+      licenseKey,
+      sportLogo,
+      secretPin,
+      sportUrl,
+      ggrPercent,
+      createdBy: Number(createdByData) || undefined,
+      categoryInfo: null,
+      providerInfo: null,
+      isFavorite,
+    };
+
+    // Fetch category info
+    const [categoryInfo] = await db
+      .select()
+      .from(dropdownOptions)
+      .where(eq(dropdownOptions.id, Number(categoryId)));
+
+    if (!categoryInfo) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid category ID" });
+    }
+
+    payload.categoryInfo = categoryInfo;
+
+    // Fetch provider info
+    const [providerInfo] = await db
+      .select()
+      .from(sports_providers)
+      .where(eq(sports_providers.id, Number(providerId)));
+
+    if (!providerInfo) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid provider ID" });
+    }
+
+    payload.providerInfo = providerInfo;
+
+    if (id) {
+      await updateSport(Number(id), payload);
+      return res.status(200).json({
+        status: true,
+        message: "Sport updated successfully",
+        data: payload,
+      });
+    } else {
+      await createSport(payload);
+      return res.status(201).json({
+        status: true,
+        message: "Sport created successfully",
+      });
+    }
+  } catch (error: any) {
+    console.error("Error in add or update sport:", error);
+
+    if (error.message === "DUPLICATE_NAME") {
+      return res
+        .status(409)
+        .json({ status: false, message: "Sport name already exists." });
+    }
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal server error" });
+  }
+};
+export const getSportList = async (req: Request, res: Response) => {
+  try {
+    const { id, page = 1, pageSize = 10 } = req.query;
+
+    const sportId = id ? Number(id) : undefined;
+    if (sportId) {
+      const sportDetails = await getSportDetailsById(sportId);
+      if (!sportDetails) {
+        return res.status(404).json({
+          status: false,
+          message: "Sport not found.",
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Sport fetched successfully.",
+        data: sportDetails,
+      });
+    }
+
+    const result = await getPaginatedSportList(Number(page), Number(pageSize));
+
+    return res.status(200).json({
+      status: true,
+      message: "Sport list fetched successfully.",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching sport list:", error);
     return res.status(500).json({
       status: false,
       message: "Server error",

@@ -69,7 +69,7 @@ export const PaymentGatewayProviderAccountController = {
   delete: asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
     await PaymentGatewayProviderAccountModel.delete(Number(id));
-    res.status(204).json({
+    res.status(200).json({
       status: true,
       message: "Payment Gateway Provider Account deleted successfully",
     });

@@ -70,11 +70,12 @@ export const PaymentGatewayProviderAccountModel = {
   },
 
   async create(data: typeof NewPaymentGatewayProviderAccount) {
-    const [id] = await db
+    const [result] = await db
       .insert(paymentGatewayProviderAccount)
       .values(data)
       .$returningId();
-    return this.getById(Number(id));
+
+    return this.getById(Number(result.id));
   },
 
   async update(

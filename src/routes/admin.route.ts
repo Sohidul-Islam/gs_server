@@ -48,6 +48,10 @@ import {
   getGameProvidersList,
   addOrUpdateGame,
   getGameList,
+  getSportsProvidersList,
+  addOrUpdateSportsProvider,
+  addOrUpdateSport,
+  getSportList,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -201,6 +205,7 @@ router.post(
   asyncHandler(deleteResponsibleGaming)
 );
 
+// game
 router.get("/game-providers", verifyToken, asyncHandler(getGameProvidersList));
 router.post(
   "/game-provider",
@@ -209,4 +214,18 @@ router.post(
 );
 router.post("/add-update-game", verifyToken, asyncHandler(addOrUpdateGame));
 router.get("/games", verifyToken, asyncHandler(getGameList));
+
+// sport
+router.get(
+  "/sport-providers",
+  verifyToken,
+  asyncHandler(getSportsProvidersList)
+);
+router.post(
+  "/sport-provider",
+  verifyToken,
+  asyncHandler(addOrUpdateSportsProvider)
+);
+router.post("/add-update-sport", verifyToken, asyncHandler(addOrUpdateSport));
+router.get("/sports", verifyToken, asyncHandler(getSportList));
 export default router;

@@ -21,11 +21,13 @@ import {
   game_providers,
   games,
   promotions,
+  sports_providers,
 } from "../db/schema";
 import { db } from "../db/connection";
 import { PromotionDataType } from "../utils/types";
 import { promotionSelectFields } from "../selected_field/promotionSelectFields";
 import { AnyMySqlTable } from "drizzle-orm/mysql-core";
+import { sports } from "../db/schema/sports";
 
 export const findAdminByUsernameOrEmail = async (usernameOrEmail: string) => {
   const [admin] = await db
@@ -642,7 +644,6 @@ export async function getPaginatedGameProviders(
     },
   };
 }
-// Example implementation
 export const getAllGameProviders = async (isParent?: boolean) => {
   const providers =
     isParent === true
@@ -705,4 +706,139 @@ export async function getGameDetailsById(id: number) {
   const [game] = await db.select().from(games).where(eq(games.id, id));
 
   return game || null;
+}
+
+// sports provider
+export async function createSportsProvider(data: any) {
+  const [existing] = await db
+    .select()
+    .from(sports_providers)
+    .where(eq(sports_providers.name, data.name));
+
+  if (existing) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db.insert(sports_providers).values(data);
+}
+export async function updateSportsProvider(id: number, data: any) {
+  const [existing] = await db
+    .select()
+    .from(sports_providers)
+    .where(
+      and(eq(sports_providers.name, data.name), ne(sports_providers.id, id))
+    );
+
+  if (existing) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db
+    .update(sports_providers)
+    .set(data)
+    .where(eq(sports_providers.id, id));
+}
+export async function getSportsProviderById(id: number) {
+  const [provider] = await db
+    .select()
+    .from(sports_providers)
+    .where(eq(sports_providers.id, id));
+
+  return provider || null;
+}
+export async function getPaginatedSportsProviders(
+  page: number,
+  pageSize: number,
+  parentId: any
+) {
+  const offset = (page - 1) * pageSize;
+  const whereClause =
+    parentId !== undefined
+      ? eq(sports_providers.parentId, parentId)
+      : undefined;
+  const rows = await db
+    .select()
+    .from(sports_providers)
+    .where(whereClause)
+    .limit(pageSize)
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(sports_providers);
+
+  const total = Number(countResult[0].count);
+
+  return {
+    data: rows,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+}
+export const getAllSportsProviders = async (isParent?: boolean) => {
+  const providers =
+    isParent === true
+      ? await db
+          .select()
+          .from(sports_providers)
+          .where(isNull(sports_providers.parentId))
+      : await db.select().from(sports_providers);
+
+  return providers;
+};
+
+// sport
+export async function createSport(data: any) {
+  const [existing] = await db
+    .select()
+    .from(sports)
+    .where(eq(sports.name, data.name));
+
+  if (existing) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db.insert(sports).values(data);
+}
+
+export async function updateSport(id: number, data: any) {
+  const [existing] = await db
+    .select()
+    .from(sports)
+    .where(eq(sports.name, data.name));
+
+  if (existing && existing.id !== id) {
+    throw new Error("DUPLICATE_NAME");
+  }
+
+  await db.update(sports).set(data).where(eq(sports.id, id));
+}
+export async function getPaginatedSportList(page: number, pageSize: number) {
+  const offset = (page - 1) * pageSize;
+  const rows = await db.select().from(sports).limit(pageSize).offset(offset);
+
+  const countResult = await db
+    .select({ count: sql`COUNT(*)`.as("count") })
+    .from(sports);
+
+  const total = Number(countResult[0].count);
+
+  return {
+    data: rows,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+}
+export async function getSportDetailsById(id: number) {
+  const [sport] = await db.select().from(sports).where(eq(sports.id, id));
+
+  return sport || null;
 }

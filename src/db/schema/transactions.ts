@@ -40,11 +40,12 @@ export const transactions = mysqlTable("transactions", {
   givenTransactionId: varchar("given_transaction_id", { length: 100 }),
   attachment: text("attachment"),
   notes: text("notes"),
-  paymentGatewayProviderAccountId: int(
-    "payment_gateway_provider_account_id"
-  ).references(() => paymentGatewayProviderAccount.id, {
-    onDelete: "set null",
-  }),
+  paymentGatewayProviderAccountId: int("provider_account_id").references(
+    () => paymentGatewayProviderAccount.id,
+    {
+      onDelete: "set null",
+    }
+  ),
   // Bank-specific fields
   accountNumber: varchar("account_number", { length: 100 }),
   accountHolderName: varchar("account_holder_name", { length: 100 }),

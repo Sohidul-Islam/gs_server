@@ -211,3 +211,50 @@ export const getTransactions = async (req: Request, res: Response) => {
       .json({ status: false, message: "Internal Server Error", errors: err });
   }
 };
+
+export const updateTransactionStatus = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const { status, notes } = req.body as { status?: string; notes?: string };
+
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ status: false, message: "Invalid transaction id" });
+    }
+
+    const validStatuses = ["approved", "pending", "rejected"] as const;
+    if (!status || !(validStatuses as readonly string[]).includes(status)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid or missing status. Allowed: approved, pending, rejected",
+      });
+    }
+
+    const [existing] = await db.select().from(transactions).where(eq(transactions.id, id));
+    if (!existing) {
+      return res.status(404).json({ status: false, message: "Transaction not found" });
+    }
+
+    const processedBy = (req as any)?.user?.id ?? null;
+    const updatePayload: any = {
+      status: status as any,
+      processedAt: new Date(),
+    };
+    if (processedBy) updatePayload.processedBy = Number(processedBy);
+    if (typeof notes === "string") updatePayload.notes = notes;
+
+    await db.update(transactions).set(updatePayload).where(eq(transactions.id, id));
+
+    const [updated] = await db.select().from(transactions).where(eq(transactions.id, id));
+
+    return res.status(200).json({
+      status: true,
+      message: `Transaction status updated to ${status}`,
+      data: updated,
+    });
+  } catch (err) {
+    console.error("updateTransactionStatus error", err);
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal Server Error", errors: err });
+  }
+};

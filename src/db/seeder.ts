@@ -5,6 +5,7 @@ import { seedUsers } from "./seed-fn/users";
 import { seedCurrency } from "./seed-fn/currency";
 import { seedAdminUsers } from "./seed-fn/adminUser";
 import { seedDropdowns } from "./seed-fn/dropdowns";
+import { seedSettings } from "./seed-fn/settings";
 
 import {
   seedPaymentMethods,
@@ -26,6 +27,9 @@ async function seed() {
     await seedPaymentMethods();
 
     await seedPaymentMethodTypes();
+
+    // seed settings
+    await seedSettings();
   } catch (error) {
     console.error("❌ Failed to insert seed data:", error);
   } finally {

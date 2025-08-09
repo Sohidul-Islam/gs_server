@@ -4,7 +4,7 @@ import { transactions } from "../db/schema/transactions";
 import { promotions } from "../db/schema/promotions";
 import { settings } from "../db/schema/settings";
 import { turnover } from "../db/schema/turnover";
-import { eq } from "drizzle-orm";
+import { eq, and, like, asc, desc, sql } from "drizzle-orm";
 import { generateUniqueTransactionId } from "../utils/refCode";
 
 type CreateDepositBody = {
@@ -125,6 +125,87 @@ export const createDeposit = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("createDeposit error", err);
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal Server Error", errors: err });
+  }
+};
+
+export const getTransactions = async (req: Request, res: Response) => {
+  try {
+    const {
+      page = 1,
+      pageSize,
+      limit,
+      type,
+      status,
+      search,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+      userId,
+    } = req.query as Record<string, string | undefined>;
+
+    const currentPage = Math.max(Number(page) || 1, 1);
+    const perPage = Math.max(Number(pageSize ?? limit) || 10, 1);
+    const offset = (currentPage - 1) * perPage;
+
+    const validTypes = ["deposit", "withdraw"] as const;
+    const validStatuses = ["approved", "pending", "rejected"] as const;
+
+    const whereClauses: any[] = [];
+    if (type && (validTypes as readonly string[]).includes(type)) {
+      whereClauses.push(eq(transactions.type, type as any));
+    }
+    if (status && (validStatuses as readonly string[]).includes(status)) {
+      whereClauses.push(eq(transactions.status, status as any));
+    }
+    if (userId && !Number.isNaN(Number(userId))) {
+      whereClauses.push(eq(transactions.userId, Number(userId)));
+    }
+    if (search && search.trim()) {
+      whereClauses.push(like(transactions.customTransactionId, `%${search}%`));
+    }
+
+    const whereExpr = whereClauses.length ? (and as any)(...whereClauses) : undefined;
+
+    const sortableColumns: Record<string, any> = {
+      createdAt: transactions.createdAt,
+      id: transactions.id,
+      amount: transactions.amount,
+      status: transactions.status,
+      type: transactions.type,
+    };
+    const orderColumn = sortableColumns[sortBy] ?? transactions.createdAt;
+    const orderExpr = (String(sortOrder).toLowerCase() === "asc"
+      ? asc(orderColumn)
+      : desc(orderColumn)) as any;
+
+    const total = await db
+      .select({ count: sql`COUNT(*)` })
+      .from(transactions)
+      .where(whereExpr as any)
+      .then((rows) => Number((rows as any)[0]?.count || 0));
+
+    const data = await db
+      .select()
+      .from(transactions)
+      .where(whereExpr as any)
+      .orderBy(orderExpr)
+      .limit(perPage)
+      .offset(offset);
+
+    return res.status(200).json({
+      status: true,
+      data,
+      pagination: {
+        page: currentPage,
+        pageSize: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+    });
+  } catch (err) {
+    console.error("getTransactions error", err);
     return res
       .status(500)
       .json({ status: false, message: "Internal Server Error", errors: err });

@@ -11,6 +11,7 @@ import { relations, sql } from "drizzle-orm";
 import { users } from "./users";
 import { paymentGatewayProviderAccount } from "./paymentGatewayProviderAccount";
 import { currencies } from "./currency";
+import { promotions } from "./promotions";
 
 export const TransactionStatus = mysqlEnum("transaction_status", [
   "approved",
@@ -33,6 +34,9 @@ export const transactions = mysqlTable("transactions", {
   currencyId: int("currency_id")
     .notNull()
     .references(() => currencies.id),
+  promotionId: int("promotion_id").references(() => promotions.id, {
+    onDelete: "set null",
+  }),
   status: TransactionStatus.default("pending"),
   customTransactionId: varchar("custom_transaction_id", {
     length: 100,
@@ -73,6 +77,10 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   currency: one(currencies, {
     fields: [transactions.currencyId],
     references: [currencies.id],
+  }),
+  promotion: one(promotions, {
+    fields: [transactions.promotionId],
+    references: [promotions.id],
   }),
   paymentGatewayProviderAccount: one(paymentGatewayProviderAccount, {
     fields: [transactions.paymentGatewayProviderAccountId],

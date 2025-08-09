@@ -18,3 +18,4 @@ export * from "./schema/sportsProvider";
 export * from "./schema/sports";
 export * from "./schema/paymentGatewayProviderAccount";
 export * from "./schema/transactions";
+export * from "./schema/turnover";

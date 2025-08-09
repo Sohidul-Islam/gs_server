@@ -71,9 +71,11 @@ export const PaymentGatewayModel = {
       .leftJoin(countries, eq(countries.id, paymentGateway.countryId))
       .where(eq(paymentGateway.id, id));
 
-    const paymentTypes = typeof result[0].paymentMethodTypeIds === "string"
+    let paymentTypes = typeof result[0].paymentMethodTypeIds === "string"
       ? (JSON.parse(result[0].paymentMethodTypeIds) as number[])
       : (result[0].paymentMethodTypeIds as number[]) || [];
+
+    paymentTypes = Array.isArray(paymentTypes) ? paymentTypes : [];
 
     const paymentTypesPopulate: Country[] = [];
 

@@ -102,7 +102,7 @@ export const createDeposit = async (req: Request, res: Response) => {
       if (promo) {
         const bonusPercentage = Number(promo.bonus || 0);
         const bonusAmount = (baseAmount * bonusPercentage) / 100;
-        const promoBase = baseAmount + bonusAmount;
+        const promoBase = bonusAmount;
         const promoTarget = promoBase * Number(promo.turnoverMultiply || 1);
         await tx.insert(turnover).values({
           userId: Number(userId),
